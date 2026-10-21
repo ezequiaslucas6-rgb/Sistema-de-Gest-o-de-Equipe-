@@ -1,0 +1,17 @@
+.content {
+  max-width: 22rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.path {
+  font-family: var(--font-family-monospace);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  word-break: break-all;
+  margin-top: 2px;
+}

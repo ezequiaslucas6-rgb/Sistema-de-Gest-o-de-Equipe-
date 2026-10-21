@@ -1,9 +1,8 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, RadioTower, Siren, PartyPopper, LogOut } from "lucide-react";
+import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, RadioTower, Siren, PartyPopper } from "lucide-react";
 import { ThemeModeSwitch } from "./ThemeModeSwitch";
-import { Button } from "./Button";
-import { supabase } from "../helpers/supabase";
+import { DatabaseMenu } from "./DatabaseMenu";
 import styles from "./AppShell.module.css";
 
 const NAV = [
@@ -42,16 +41,7 @@ export const AppShell = ({ children, className }: { children: ReactNode; classNa
         </nav>
         <div className={styles.sidebarFooter}>
           <ThemeModeSwitch className={styles.theme} />
-          <Button
-            variant="ghost"
-            size="icon-md"
-            className={styles.theme}
-            onClick={() => supabase.auth.signOut()}
-            aria-label="Sair"
-            title="Sair"
-          >
-            <LogOut size={18} />
-          </Button>
+          <DatabaseMenu className={styles.theme} />
         </div>
       </aside>
       <main className={styles.main}>{children}</main>

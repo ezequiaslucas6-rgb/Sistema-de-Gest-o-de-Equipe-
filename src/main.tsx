@@ -4,7 +4,6 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./base.css";
 import "./global.css";
 import { GlobalContextProviders } from "./components/_globalContextProviders";
-import { AuthGate } from "./components/AuthGate";
 import { AppShell } from "./components/AppShell";
 import DashboardPage from "./pages/_index";
 import SchedulePage from "./pages/escala";
@@ -24,19 +23,17 @@ const pages = [
   { path: "/ausencias", element: <AbsencesPage /> },
 ];
 
-// HashRouter: as rotas ficam depois do "#", o que funciona no GitHub Pages sem configuração extra
+// HashRouter: as rotas ficam depois do "#", o que funciona abrindo o index.html direto do disco (Electron)
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HashRouter>
       <GlobalContextProviders>
-        <AuthGate>
-          <Routes>
-            {pages.map((p) => (
-              <Route key={p.path} path={p.path} element={<AppShell>{p.element}</AppShell>} />
-            ))}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AuthGate>
+        <Routes>
+          {pages.map((p) => (
+            <Route key={p.path} path={p.path} element={<AppShell>{p.element}</AppShell>} />
+          ))}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </GlobalContextProviders>
     </HashRouter>
   </StrictMode>,

@@ -1,0 +1,880 @@
+{
+ "teams": [
+  {
+   "id": 1,
+   "name": "Suporte 1",
+   "code": "S1",
+   "sector": "suporte",
+   "vehicle": "Fiorino 01",
+   "notes": null
+  },
+  {
+   "id": 2,
+   "name": "Suporte 2",
+   "code": "S2",
+   "sector": "suporte",
+   "vehicle": "Fiorino 02",
+   "notes": null
+  },
+  {
+   "id": 3,
+   "name": "Suporte 3",
+   "code": "S3",
+   "sector": "suporte",
+   "vehicle": "Fiorino 03",
+   "notes": null
+  },
+  {
+   "id": 4,
+   "name": "Suporte 4",
+   "code": "S4",
+   "sector": "suporte",
+   "vehicle": "Fiorino 04",
+   "notes": null
+  },
+  {
+   "id": 5,
+   "name": "Backbone 1",
+   "code": "B1",
+   "sector": "infraestrutura",
+   "vehicle": "Caminhonete 01",
+   "notes": null
+  },
+  {
+   "id": 6,
+   "name": "Backbone 2",
+   "code": "B2",
+   "sector": "infraestrutura",
+   "vehicle": "Caminhonete 02",
+   "notes": null
+  },
+  {
+   "id": 7,
+   "name": "Backbone 3",
+   "code": "B3",
+   "sector": "infraestrutura",
+   "vehicle": "Caminhonete 03",
+   "notes": null
+  }
+ ],
+ "technicians": [
+  {
+   "id": 1,
+   "name": "Técnico 01",
+   "phone": null,
+   "role": "Técnico de Suporte",
+   "teamId": 1
+  },
+  {
+   "id": 2,
+   "name": "Técnico 02",
+   "phone": null,
+   "role": "Auxiliar de Suporte",
+   "teamId": 1
+  },
+  {
+   "id": 3,
+   "name": "Técnico 03",
+   "phone": null,
+   "role": "Técnico de Suporte",
+   "teamId": 2
+  },
+  {
+   "id": 4,
+   "name": "Técnico 04",
+   "phone": null,
+   "role": "Auxiliar de Suporte",
+   "teamId": 2
+  },
+  {
+   "id": 5,
+   "name": "Técnico 05",
+   "phone": null,
+   "role": "Técnico de Suporte",
+   "teamId": 3
+  },
+  {
+   "id": 6,
+   "name": "Técnico 06",
+   "phone": null,
+   "role": "Auxiliar de Suporte",
+   "teamId": 3
+  },
+  {
+   "id": 7,
+   "name": "Técnico 07",
+   "phone": null,
+   "role": "Técnico de Suporte",
+   "teamId": 4
+  },
+  {
+   "id": 8,
+   "name": "Técnico 08",
+   "phone": null,
+   "role": "Auxiliar de Suporte",
+   "teamId": 4
+  },
+  {
+   "id": 9,
+   "name": "Técnico 09",
+   "phone": null,
+   "role": "Técnico de Rede",
+   "teamId": 5
+  },
+  {
+   "id": 10,
+   "name": "Técnico 10",
+   "phone": null,
+   "role": "Emendador de Fibra",
+   "teamId": 5
+  },
+  {
+   "id": 11,
+   "name": "Técnico 11",
+   "phone": null,
+   "role": "Técnico de Rede",
+   "teamId": 6
+  },
+  {
+   "id": 12,
+   "name": "Técnico 12",
+   "phone": null,
+   "role": "Emendador de Fibra",
+   "teamId": 6
+  },
+  {
+   "id": 13,
+   "name": "Técnico 13",
+   "phone": null,
+   "role": "Técnico de Rede",
+   "teamId": 7
+  },
+  {
+   "id": 14,
+   "name": "Técnico 14",
+   "phone": null,
+   "role": "Emendador de Fibra",
+   "teamId": 7
+  }
+ ],
+ "absences": [
+  {
+   "id": 1,
+   "technicianId": 3,
+   "startDate": "2026-10-22",
+   "endDate": "2026-10-23",
+   "kind": "atestado",
+   "notes": "Exemplo — pode excluir"
+  },
+  {
+   "id": 2,
+   "technicianId": 11,
+   "startDate": "2026-11-03",
+   "endDate": "2026-11-17",
+   "kind": "ferias",
+   "notes": "Exemplo — pode excluir"
+  }
+ ],
+ "settings": [
+  {
+   "sector": "suporte",
+   "minCoverage": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    1,
+    1
+   ],
+   "maxConsecutive": 6,
+   "hoursSixOne": 8,
+   "hoursSixOneSaturday": 4,
+   "hoursFiveTwo": 8.8,
+   "shiftStart": "08:00",
+   "shiftEnd": "17:48",
+   "onCallTeams": 1,
+   "onCallSaturday": "14:00-18:00",
+   "onCallSunday": "08:00-12:00,14:00-18:00"
+  },
+  {
+   "sector": "infraestrutura",
+   "minCoverage": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    1,
+    1
+   ],
+   "maxConsecutive": 6,
+   "hoursSixOne": 8,
+   "hoursSixOneSaturday": 4,
+   "hoursFiveTwo": 8.8,
+   "shiftStart": "08:00",
+   "shiftEnd": "17:48",
+   "onCallTeams": 1,
+   "onCallSaturday": "14:00-18:00",
+   "onCallSunday": "08:00-12:00,14:00-18:00"
+  }
+ ],
+ "patterns": [
+  {
+   "id": 1,
+   "sector": "suporte",
+   "scaleType": "6x1",
+   "name": "Escala atual 6x1 (domingo + plantão)",
+   "startDate": "2026-10-19",
+   "cycleWeeks": 1,
+   "daysOff": {
+    "1": [
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "2": [
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "3": [
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "4": [
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ]
+   }
+  },
+  {
+   "id": 2,
+   "sector": "suporte",
+   "scaleType": "5x2",
+   "name": "Transição 5x2 (sáb+dom + plantão)",
+   "startDate": "2026-12-07",
+   "cycleWeeks": 1,
+   "daysOff": {
+    "1": [
+     {
+      "day": 5,
+      "kind": "regular"
+     },
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "2": [
+     {
+      "day": 5,
+      "kind": "regular"
+     },
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "3": [
+     {
+      "day": 5,
+      "kind": "regular"
+     },
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "4": [
+     {
+      "day": 5,
+      "kind": "regular"
+     },
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ]
+   }
+  },
+  {
+   "id": 3,
+   "sector": "infraestrutura",
+   "scaleType": "6x1",
+   "name": "Escala atual 6x1 (domingo + plantão)",
+   "startDate": "2026-10-19",
+   "cycleWeeks": 1,
+   "daysOff": {
+    "5": [
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "6": [
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "7": [
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ]
+   }
+  },
+  {
+   "id": 4,
+   "sector": "infraestrutura",
+   "scaleType": "5x2",
+   "name": "Transição 5x2 (sáb+dom + plantão)",
+   "startDate": "2026-12-07",
+   "cycleWeeks": 1,
+   "daysOff": {
+    "5": [
+     {
+      "day": 5,
+      "kind": "regular"
+     },
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "6": [
+     {
+      "day": 5,
+      "kind": "regular"
+     },
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ],
+    "7": [
+     {
+      "day": 5,
+      "kind": "regular"
+     },
+     {
+      "day": 6,
+      "kind": "regular"
+     }
+    ]
+   }
+  }
+ ],
+ "onCallShifts": [
+  {
+   "id": 1,
+   "teamId": 1,
+   "weekendStart": "2026-10-24",
+   "compDates": [
+    "2026-10-30",
+    "2026-10-31"
+   ],
+   "notes": null
+  },
+  {
+   "id": 2,
+   "teamId": 2,
+   "weekendStart": "2026-10-31",
+   "compDates": [
+    "2026-11-06",
+    "2026-11-07"
+   ],
+   "notes": null
+  },
+  {
+   "id": 3,
+   "teamId": 3,
+   "weekendStart": "2026-11-07",
+   "compDates": [
+    "2026-11-13",
+    "2026-11-14"
+   ],
+   "notes": null
+  },
+  {
+   "id": 4,
+   "teamId": 4,
+   "weekendStart": "2026-11-14",
+   "compDates": [
+    "2026-11-21",
+    "2026-11-23"
+   ],
+   "notes": null
+  },
+  {
+   "id": 5,
+   "teamId": 1,
+   "weekendStart": "2026-11-21",
+   "compDates": [
+    "2026-11-27",
+    "2026-11-28"
+   ],
+   "notes": null
+  },
+  {
+   "id": 6,
+   "teamId": 2,
+   "weekendStart": "2026-11-28",
+   "compDates": [
+    "2026-12-04",
+    "2026-12-05"
+   ],
+   "notes": null
+  },
+  {
+   "id": 7,
+   "teamId": 3,
+   "weekendStart": "2026-12-05",
+   "compDates": [
+    "2026-12-10",
+    "2026-12-11"
+   ],
+   "notes": null
+  },
+  {
+   "id": 8,
+   "teamId": 4,
+   "weekendStart": "2026-12-12",
+   "compDates": [
+    "2026-12-17",
+    "2026-12-18"
+   ],
+   "notes": null
+  },
+  {
+   "id": 9,
+   "teamId": 1,
+   "weekendStart": "2026-12-19",
+   "compDates": [
+    "2026-12-24",
+    "2026-12-28"
+   ],
+   "notes": null
+  },
+  {
+   "id": 10,
+   "teamId": 2,
+   "weekendStart": "2026-12-26",
+   "compDates": [
+    "2026-12-31",
+    "2027-01-04"
+   ],
+   "notes": null
+  },
+  {
+   "id": 11,
+   "teamId": 3,
+   "weekendStart": "2027-01-02",
+   "compDates": [
+    "2027-01-07",
+    "2027-01-08"
+   ],
+   "notes": null
+  },
+  {
+   "id": 12,
+   "teamId": 4,
+   "weekendStart": "2027-01-09",
+   "compDates": [
+    "2027-01-14",
+    "2027-01-15"
+   ],
+   "notes": null
+  },
+  {
+   "id": 13,
+   "teamId": 5,
+   "weekendStart": "2026-10-24",
+   "compDates": [
+    "2026-10-30",
+    "2026-10-31"
+   ],
+   "notes": null
+  },
+  {
+   "id": 14,
+   "teamId": 6,
+   "weekendStart": "2026-10-31",
+   "compDates": [
+    "2026-11-06",
+    "2026-11-07"
+   ],
+   "notes": null
+  },
+  {
+   "id": 15,
+   "teamId": 7,
+   "weekendStart": "2026-11-07",
+   "compDates": [
+    "2026-11-13",
+    "2026-11-14"
+   ],
+   "notes": null
+  },
+  {
+   "id": 16,
+   "teamId": 5,
+   "weekendStart": "2026-11-14",
+   "compDates": [
+    "2026-11-21",
+    "2026-11-23"
+   ],
+   "notes": null
+  },
+  {
+   "id": 17,
+   "teamId": 6,
+   "weekendStart": "2026-11-21",
+   "compDates": [
+    "2026-11-27",
+    "2026-11-28"
+   ],
+   "notes": null
+  },
+  {
+   "id": 18,
+   "teamId": 7,
+   "weekendStart": "2026-11-28",
+   "compDates": [
+    "2026-12-04",
+    "2026-12-05"
+   ],
+   "notes": null
+  },
+  {
+   "id": 19,
+   "teamId": 5,
+   "weekendStart": "2026-12-05",
+   "compDates": [
+    "2026-12-10",
+    "2026-12-11"
+   ],
+   "notes": null
+  },
+  {
+   "id": 20,
+   "teamId": 6,
+   "weekendStart": "2026-12-12",
+   "compDates": [
+    "2026-12-17",
+    "2026-12-18"
+   ],
+   "notes": null
+  },
+  {
+   "id": 21,
+   "teamId": 7,
+   "weekendStart": "2026-12-19",
+   "compDates": [
+    "2026-12-24",
+    "2026-12-28"
+   ],
+   "notes": null
+  },
+  {
+   "id": 22,
+   "teamId": 5,
+   "weekendStart": "2026-12-26",
+   "compDates": [
+    "2026-12-31",
+    "2027-01-04"
+   ],
+   "notes": null
+  },
+  {
+   "id": 23,
+   "teamId": 6,
+   "weekendStart": "2027-01-02",
+   "compDates": [
+    "2027-01-07",
+    "2027-01-08"
+   ],
+   "notes": null
+  },
+  {
+   "id": 24,
+   "teamId": 7,
+   "weekendStart": "2027-01-09",
+   "compDates": [
+    "2027-01-14",
+    "2027-01-15"
+   ],
+   "notes": null
+  }
+ ],
+ "holidays": [
+  {
+   "id": 1,
+   "date": "2026-01-01",
+   "name": "Confraternização Universal",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 2,
+   "date": "2026-02-16",
+   "name": "Carnaval (segunda)",
+   "kind": "ponto_facultativo",
+   "dayOff": false,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 3,
+   "date": "2026-02-17",
+   "name": "Carnaval (terça)",
+   "kind": "ponto_facultativo",
+   "dayOff": false,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 4,
+   "date": "2026-04-03",
+   "name": "Sexta-feira Santa",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 5,
+   "date": "2026-04-21",
+   "name": "Tiradentes",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 6,
+   "date": "2026-05-01",
+   "name": "Dia do Trabalho",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 7,
+   "date": "2026-06-04",
+   "name": "Corpus Christi",
+   "kind": "ponto_facultativo",
+   "dayOff": false,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 8,
+   "date": "2026-09-07",
+   "name": "Independência do Brasil",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 9,
+   "date": "2026-10-12",
+   "name": "Nossa Senhora Aparecida",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 10,
+   "date": "2026-11-02",
+   "name": "Finados",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 11,
+   "date": "2026-11-15",
+   "name": "Proclamação da República",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 12,
+   "date": "2026-11-20",
+   "name": "Dia Nacional de Zumbi e da Consciência Negra",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 13,
+   "date": "2026-12-25",
+   "name": "Natal",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 14,
+   "date": "2027-01-01",
+   "name": "Confraternização Universal",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 15,
+   "date": "2027-02-08",
+   "name": "Carnaval (segunda)",
+   "kind": "ponto_facultativo",
+   "dayOff": false,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 16,
+   "date": "2027-02-09",
+   "name": "Carnaval (terça)",
+   "kind": "ponto_facultativo",
+   "dayOff": false,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 17,
+   "date": "2027-03-26",
+   "name": "Sexta-feira Santa",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 18,
+   "date": "2027-04-21",
+   "name": "Tiradentes",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 19,
+   "date": "2027-05-01",
+   "name": "Dia do Trabalho",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 20,
+   "date": "2027-05-27",
+   "name": "Corpus Christi",
+   "kind": "ponto_facultativo",
+   "dayOff": false,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 21,
+   "date": "2027-09-07",
+   "name": "Independência do Brasil",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 22,
+   "date": "2027-10-12",
+   "name": "Nossa Senhora Aparecida",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 23,
+   "date": "2027-11-02",
+   "name": "Finados",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 24,
+   "date": "2027-11-15",
+   "name": "Proclamação da República",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 25,
+   "date": "2027-11-20",
+   "name": "Dia Nacional de Zumbi e da Consciência Negra",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  },
+  {
+   "id": 26,
+   "date": "2027-12-25",
+   "name": "Natal",
+   "kind": "nacional",
+   "dayOff": true,
+   "onCallTeamIds": [],
+   "onCallHours": "08:00-12:00,14:00-18:00",
+   "compDate": null
+  }
+ ]
+}

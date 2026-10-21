@@ -1,0 +1,38 @@
+name: Gerar instalador do Windows
+
+# A cada push na main, gera o instalador (.exe) e a versão portátil e publica numa Release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instalador
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist
+      - name: Publicar Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Escala Técnica 1.0.${{ github.run_number }}
+          body: |
+            **Instalador:** baixe `Escala-Tecnica-Instalador-*.exe`, execute e siga os passos — cria o atalho "Escala Técnica" na área de trabalho.
+            **Portátil:** `Escala-Tecnica-Portatil-*.exe` roda sem instalar.
+            O banco de dados fica em Documentos\Escala Técnica\escala-tecnica.sqlite.
+          files: |
+            release/Escala-Tecnica-Instalador-*.exe
+            release/Escala-Tecnica-Portatil-*.exe
