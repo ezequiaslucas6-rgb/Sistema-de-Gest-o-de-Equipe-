@@ -1,0 +1,454 @@
+.page {
+  max-width: 86rem;
+}
+
+.error {
+  color: var(--error);
+  padding: var(--spacing-6);
+}
+
+.mono {
+  font-family: var(--font-family-monospace);
+}
+
+.sectorToggle {
+  margin-bottom: var(--spacing-6);
+  flex-wrap: wrap;
+}
+
+.section {
+  margin-bottom: var(--spacing-8);
+}
+
+.h2 {
+  font-family: var(--font-family-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 var(--spacing-3);
+  padding-bottom: var(--spacing-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.skel {
+  height: 10rem;
+}
+
+.muted {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  margin: var(--spacing-1) 0;
+}
+
+.compareWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 1fr);
+  gap: var(--spacing-4);
+}
+
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.tableScroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.compare td,
+.compare th {
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.compareHead {
+  font-family: var(--font-family-display);
+  font-size: 1.3rem;
+  text-align: right;
+}
+
+.compareLabel {
+  color: var(--muted-foreground);
+}
+
+.compareVal {
+  text-align: right;
+  font-family: var(--font-family-monospace);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.bad {
+  color: var(--error) !important;
+}
+
+.good {
+  color: var(--success);
+}
+
+.bars {
+  display: inline-flex;
+  gap: 3px;
+  height: 3.2rem;
+  align-items: flex-end;
+}
+
+.barCol {
+  position: relative;
+  width: 0.9rem;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: var(--surface);
+  border-radius: 2px;
+}
+
+.bar {
+  width: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+.barBad {
+  background: var(--error);
+}
+
+.barMin {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  height: 2px;
+  background: var(--foreground);
+}
+
+.barLabel {
+  position: absolute;
+  bottom: -1rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.55rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.insight {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  font-size: 0.875rem;
+}
+
+.insight p {
+  margin: 0 0 var(--spacing-2);
+}
+
+.insightTitle {
+  font-family: var(--font-family-monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: var(--spacing-2);
+}
+
+.ok,
+.warnText {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: flex-start;
+}
+
+.ok {
+  color: var(--success);
+}
+
+.warnText {
+  color: var(--warning);
+}
+
+.ok svg,
+.warnText svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.genLayout {
+  display: grid;
+  grid-template-columns: 20rem minmax(0, 1fr);
+  gap: var(--spacing-6);
+  align-items: start;
+}
+
+.params {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+}
+
+.label {
+  display: block;
+  font-family: var(--font-family-monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-2);
+  margin-bottom: var(--spacing-1);
+}
+
+.minGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.minCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.minDay {
+  font-size: 0.68rem;
+  color: var(--muted-foreground);
+}
+
+.minInput {
+  padding: 0 !important;
+  text-align: center;
+  font-family: var(--font-family-monospace);
+  height: 2.1rem !important;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--spacing-2);
+}
+
+.paramActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+}
+
+.previewCol {
+  min-width: 0;
+}
+
+.placeholder {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-8);
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.previewGridWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+}
+
+.previewGrid {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.75rem;
+}
+
+.previewGrid td,
+.previewGrid th {
+  padding: 2px 1px;
+  text-align: center;
+}
+
+.pgSticky {
+  position: sticky;
+  left: 0;
+  background: var(--card);
+  z-index: 1;
+  font-family: var(--font-family-monospace);
+  font-weight: 600;
+  padding: 0 var(--spacing-2) !important;
+  border-right: 1px solid var(--border);
+}
+
+.pgHead {
+  position: relative;
+  font-family: var(--font-family-monospace);
+  font-weight: 400;
+  color: var(--muted-foreground);
+  padding-top: 1.1rem !important;
+}
+
+.weekLabel {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.weekStart {
+  border-left: 1px solid var(--border);
+}
+
+.weekendCol {
+  background: var(--surface);
+}
+
+.pgCell {
+  min-width: 1.45rem;
+  height: 1.6rem;
+  font-size: 0.6rem;
+}
+
+.pgCov td {
+  font-family: var(--font-family-monospace);
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin: var(--spacing-3) 0;
+}
+
+.metric {
+  background: var(--card);
+  padding: var(--spacing-3);
+  display: flex;
+  flex-direction: column;
+}
+
+.metricVal {
+  font-family: var(--font-family-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricLabel {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.warnings {
+  list-style: none;
+  padding: var(--spacing-3);
+  margin: 0 0 var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--border));
+  background: color-mix(in srgb, var(--warning) 8%, var(--card));
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.warnings li {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.warnings svg {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.saveBox {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+}
+
+.saveFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+}
+
+.patternList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  margin-top: var(--spacing-3);
+}
+
+.patternRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.patternRow:last-child {
+  border-bottom: none;
+}
+
+.patternScale {
+  font-family: var(--font-family-monospace);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.patternInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.patternName {
+  font-weight: 600;
+}
+
+@media (max-width: 1000px) {
+  .compareWrap,
+  .genLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .compare td,
+  .compare th {
+    padding: var(--spacing-2);
+    font-size: 0.8rem;
+  }
+  .saveFields {
+    grid-template-columns: 1fr;
+  }
+  .patternRow {
+    flex-wrap: wrap;
+  }
+}

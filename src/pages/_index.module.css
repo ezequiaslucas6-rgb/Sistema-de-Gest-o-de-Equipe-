@@ -1,0 +1,346 @@
+.page {
+  max-width: 82rem;
+}
+
+.error {
+  color: var(--error);
+  padding: var(--spacing-6);
+}
+
+.mono {
+  font-family: var(--font-family-monospace);
+}
+
+.transition {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: flex-start;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-radius: var(--radius);
+  margin-bottom: var(--spacing-6);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.sectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+
+.sectorCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--sector-support);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+
+.oncall {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sector-infra);
+  background: var(--card);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+
+.oncallBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.oncallItem {
+  margin-right: var(--spacing-4);
+}
+
+.oncallSector {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.oncallComp {
+  font-size: 0.8rem;
+  color: var(--warning);
+}
+
+.support {
+  border-top-color: var(--sector-support);
+}
+
+.infra {
+  border-top-color: var(--sector-infra);
+}
+
+.sectorHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.micro {
+  font-family: var(--font-family-monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.bigNumber {
+  font-family: var(--font-family-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--spacing-1);
+}
+
+.bigOf {
+  font-family: var(--font-family-base);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  margin-left: var(--spacing-1);
+}
+
+.sectorMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-1);
+}
+
+.scale {
+  font-family: var(--font-family-monospace);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.teamList {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.teamCell {
+  width: 2rem;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.teamInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.teamName {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.code {
+  font-family: var(--font-family-monospace);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-right: var(--spacing-1);
+}
+
+.members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--spacing-3);
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.absent {
+  text-decoration: line-through;
+  color: var(--error);
+}
+
+.statusText {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.stripDay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-monospace);
+  background: var(--background);
+}
+
+.weekendDay {
+  background: var(--surface);
+}
+
+.below {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 10%, var(--card));
+  color: var(--error);
+}
+
+.stripWd {
+  font-size: 0.6rem;
+  color: var(--muted-foreground);
+}
+
+.stripNum {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.stripDate {
+  font-size: 0.6rem;
+  color: var(--muted-foreground);
+}
+
+.partialDot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+.lower {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: var(--spacing-4);
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  min-width: 0;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-family: var(--font-family-display);
+  font-size: 1.05rem;
+  margin: 0 0 var(--spacing-3);
+}
+
+.alertList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.alertItem {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: baseline;
+  padding: var(--spacing-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.alertDate {
+  font-family: var(--font-family-monospace);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  min-width: 8.5rem;
+}
+
+.crit {
+  color: var(--error);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.warn {
+  color: var(--warning);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.empty {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-4);
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.legendCell {
+  width: 1.6rem;
+  min-width: 1.6rem;
+  height: 1.4rem;
+  cursor: default;
+}
+
+.skelBig {
+  width: 8rem;
+  height: 2.6rem;
+}
+
+.skelRow {
+  height: 2.5rem;
+  margin: var(--spacing-1) 0;
+}
+
+.skelStrip {
+  grid-column: 1 / -1;
+  height: 3rem;
+}

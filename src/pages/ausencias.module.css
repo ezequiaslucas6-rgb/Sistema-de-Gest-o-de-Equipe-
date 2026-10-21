@@ -1,0 +1,137 @@
+.page {
+  max-width: 64rem;
+}
+
+.error {
+  color: var(--error);
+  padding: var(--spacing-6);
+}
+
+.availability {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-6);
+}
+
+.availCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.micro {
+  font-family: var(--font-family-monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.availNum {
+  font-family: var(--font-family-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.availOf {
+  font-family: var(--font-family-base);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  margin-left: var(--spacing-1);
+}
+
+.toolbar {
+  margin-bottom: var(--spacing-3);
+}
+
+.table {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.skel {
+  height: 10rem;
+}
+
+.empty {
+  padding: var(--spacing-6);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.dates {
+  font-family: var(--font-family-monospace);
+  font-size: 0.82rem;
+  min-width: 13rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.days {
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+}
+
+.who {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+}
+
+.label {
+  display: block;
+  font-family: var(--font-family-monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-2);
+  margin-bottom: var(--spacing-1);
+}
+
+.errorText {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin: var(--spacing-1) 0 0;
+}

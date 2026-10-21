@@ -1,0 +1,10 @@
+.trigger {
+  justify-content: flex-start;
+  width: 100%;
+  font-family: var(--font-family-monospace);
+  font-size: 0.875rem;
+}
+
+.content {
+  width: auto;
+}
