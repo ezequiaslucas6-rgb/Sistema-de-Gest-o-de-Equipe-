@@ -152,3 +152,18 @@ export function importHolidays(body: { year: number }) {
   const { year } = z.object({ year: z.number().int().min(2000).max(2100) }).parse(body);
   return dbCall<{ created: number }>("insertHolidays", { holidays: scheduleEngine.brazilNationalHolidays(year) });
 }
+
+// ---------- armários ----------
+
+export const LOCKER_COUNT = 24;
+
+export const lockerSchema = z.object({
+  id: z.string().regex(/^\d{2}$/, "Porta inválida").refine((v) => Number(v) >= 1 && Number(v) <= LOCKER_COUNT, "Porta inválida"),
+  name: z.string().trim().min(1, "Informe o nome do ocupante para salvar.").max(80),
+  sector: z.string().trim().max(60).nullable(),
+  since: isoDate.nullable(),
+  note: z.string().trim().max(300).nullable(),
+  technicianId: z.number().int().nullable(),
+});
+export const saveLocker = (body: z.infer<typeof lockerSchema>) => dbCall<Ok>("saveLocker", lockerSchema.parse(body));
+export const freeLocker = (body: { id: string }) => dbCall<Ok>("freeLocker", { id: lockerSchema.shape.id.parse(body.id) });

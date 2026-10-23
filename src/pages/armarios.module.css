@@ -1,0 +1,332 @@
+.page {
+  max-width: 72rem;
+}
+
+.error {
+  color: var(--error);
+  padding: var(--spacing-6);
+}
+
+.stats {
+  display: flex;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2) var(--spacing-4);
+  min-width: 6rem;
+}
+
+.stat b {
+  display: block;
+  font-family: var(--font-family-display);
+  font-size: 1.8rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat span {
+  font-family: var(--font-family-monospace);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted-foreground);
+}
+
+.statBusy b {
+  color: var(--warning);
+}
+
+.statFree b {
+  color: var(--success);
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-4);
+}
+
+.search {
+  position: relative;
+  flex: 1 1 16rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: var(--spacing-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.searchInput {
+  padding-left: 2.2rem !important;
+}
+
+/* Grade fixa de 6 colunas, como no armário real */
+.cabinet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-3);
+}
+
+.skel {
+  height: 28rem;
+}
+
+.grid {
+  display: grid;
+  gap: var(--spacing-2);
+}
+
+.locker {
+  position: relative;
+  min-height: 7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  padding: var(--spacing-3) var(--spacing-2) var(--spacing-2) calc(var(--spacing-3) + 4px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-1);
+  text-align: left;
+  font: inherit;
+  transition: border-color var(--animation-duration-fast) ease, opacity var(--animation-duration-fast) ease;
+}
+
+.locker::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--success);
+}
+
+.busy::before {
+  background: var(--warning);
+}
+
+.locker:hover {
+  border-color: var(--primary);
+}
+
+.locker:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.open {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.dim {
+  opacity: 0.28;
+}
+
+.num {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "fechadura" decorativa da porta */
+.lock {
+  position: absolute;
+  right: var(--spacing-2);
+  top: var(--spacing-3);
+  display: grid;
+  gap: 4px;
+}
+
+.lock i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+  opacity: 0.55;
+}
+
+.occupant {
+  font-size: 0.78rem;
+  line-height: 1.2;
+  color: var(--muted-foreground);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.chip {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--success) 14%, var(--card));
+  color: var(--success);
+}
+
+.busy .chip {
+  background: color-mix(in srgb, var(--warning) 16%, var(--card));
+  color: var(--warning);
+}
+
+.editor {
+  width: 18rem;
+  max-height: var(--radix-popover-content-available-height);
+  overflow-y: auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.editorHead {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-1);
+}
+
+.label {
+  font-family: var(--font-family-monospace);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-2);
+}
+
+.formError {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin: var(--spacing-1) 0 0;
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-3);
+}
+
+.freeBtn {
+  color: var(--warning) !important;
+  border-color: var(--warning) !important;
+}
+
+.listSection {
+  margin-top: var(--spacing-6);
+}
+
+.h2 {
+  font-family: var(--font-family-display);
+  font-size: 1.15rem;
+  margin: 0 0 var(--spacing-3);
+}
+
+.listWrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th {
+  font-family: var(--font-family-monospace);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.row {
+  cursor: pointer;
+}
+
+.row:hover td {
+  background: var(--surface);
+}
+
+.n {
+  font-family: var(--font-family-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  width: 4.5rem;
+}
+
+.mono {
+  font-family: var(--font-family-monospace);
+  font-size: 0.8rem;
+}
+
+.note {
+  white-space: normal !important;
+  color: var(--muted-foreground);
+  max-width: 22rem;
+}
+
+@media (max-width: 700px) {
+  .cabinet {
+    padding: var(--spacing-2);
+  }
+  .grid {
+    gap: 4px;
+  }
+  .locker {
+    min-height: 5rem;
+    padding: 6px 4px 6px 9px;
+  }
+  .num {
+    font-size: 1.2rem;
+  }
+  .lock,
+  .occupant {
+    display: none;
+  }
+  .chip {
+    font-size: 0.55rem;
+    padding: 1px 4px;
+  }
+}

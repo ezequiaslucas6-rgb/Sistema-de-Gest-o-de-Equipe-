@@ -12,6 +12,7 @@ import HolidaysPage from "./pages/feriados";
 import PlanningPage from "./pages/planejamento";
 import TeamsPage from "./pages/equipes";
 import AbsencesPage from "./pages/ausencias";
+import LockersPage from "./pages/armarios";
 
 const pages = [
   { path: "/", element: <DashboardPage /> },
@@ -21,6 +22,7 @@ const pages = [
   { path: "/planejamento", element: <PlanningPage /> },
   { path: "/equipes", element: <TeamsPage /> },
   { path: "/ausencias", element: <AbsencesPage /> },
+  { path: "/armarios", element: <LockersPage /> },
 ];
 
 // HashRouter: as rotas ficam depois do "#", o que funciona abrindo o index.html direto do disco (Electron)

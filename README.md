@@ -40,6 +40,7 @@ feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pe
 | Planejamento 6x1 → 5x2 | Gerador de escala e comparativo entre as duas |
 | Equipes e duplas | Cadastro de técnicos e duplas |
 | Ausências | Férias, atestados, folgas extras |
+| Armários | Mapa dos 24 armários (6 por fileira, a 13 aparece como "12+1"): ocupante, setor, desde quando e observação; busca e filtro de ocupados/livres; resumo no Painel |
 
 ## Regras implementadas
 
@@ -49,6 +50,8 @@ feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pe
   para o próximo dia útil.
 - **Feriados:** folga geral coberta pela dupla de plantão; quem trabalha folga no próximo dia útil.
 - **Banco de horas:** crédito = horas de plantão; débito = horas dos dias de folga que seriam trabalhados.
+- **Armários:** o ocupante pode ser um técnico cadastrado (nome e setor preenchidos automaticamente) ou outra pessoa.
+  Se o técnico for excluído, o nome continua no armário.
 
 ## Estrutura do código
 

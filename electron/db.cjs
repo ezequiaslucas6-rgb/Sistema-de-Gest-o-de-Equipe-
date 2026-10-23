@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const initSqlJs = require("sql.js");
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2; // 2: mapa dos armários
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -89,6 +89,17 @@ CREATE TABLE IF NOT EXISTS holidays (
   comp_date TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Mapa dos armários: porta "01".."24"; só existe linha para porta ocupada
+CREATE TABLE IF NOT EXISTS lockers (
+  id TEXT PRIMARY KEY CHECK (length(id) = 2),
+  name TEXT NOT NULL,
+  sector TEXT,
+  since TEXT,
+  note TEXT,
+  technician_id INTEGER REFERENCES technicians(id) ON DELETE SET NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 `;
 
 class EscalaDb {
@@ -105,8 +116,10 @@ class EscalaDb {
     const exists = fs.existsSync(file);
     const store = new EscalaDb(SQL, file, exists ? fs.readFileSync(file) : null);
     store.db.run(SCHEMA);
-    if (!exists) {
-      if (seedFile && fs.existsSync(seedFile)) store.seed(JSON.parse(fs.readFileSync(seedFile, "utf8")));
+    if (!exists && seedFile && fs.existsSync(seedFile)) store.seed(JSON.parse(fs.readFileSync(seedFile, "utf8")));
+    // banco novo ou de versão anterior: grava a estrutura atual (tabelas novas já foram criadas acima)
+    const version = store.get("SELECT value FROM meta WHERE key = 'schema_version'");
+    if (!exists || Number(version?.value ?? 0) < SCHEMA_VERSION) {
       store.db.run("INSERT OR REPLACE INTO meta (key, value) VALUES ('schema_version', ?)", [String(SCHEMA_VERSION)]);
       store.persist();
     }
@@ -276,6 +289,9 @@ function createOperations(store) {
             onCallHours: h.on_call_hours,
             compDate: h.comp_date,
           })),
+        lockers: store
+          .all("SELECT id, name, sector, since, note, technician_id FROM lockers ORDER BY id")
+          .map((l) => ({ id: l.id, name: l.name, sector: l.sector, since: l.since, note: l.note, technicianId: l.technician_id })),
       };
     },
 
@@ -403,6 +419,26 @@ function createOperations(store) {
           created += store.changes();
         }
         return { created };
+      });
+    },
+
+    /** Registra (ou troca) o ocupante de uma porta do armário. */
+    saveLocker(i) {
+      return store.write(() => {
+        store.run(
+          `INSERT INTO lockers (id, name, sector, since, note, technician_id, updated_at) VALUES (?,?,?,?,?,?, CURRENT_TIMESTAMP)
+           ON CONFLICT(id) DO UPDATE SET name = excluded.name, sector = excluded.sector, since = excluded.since,
+             note = excluded.note, technician_id = excluded.technician_id, updated_at = CURRENT_TIMESTAMP`,
+          [i.id, i.name, i.sector || null, i.since || null, i.note || null, i.technicianId ?? null],
+        );
+        return { ok: true };
+      });
+    },
+    /** Libera a porta (apaga o ocupante). */
+    freeLocker({ id }) {
+      return store.write(() => {
+        store.run("DELETE FROM lockers WHERE id = ?", [id]);
+        return { ok: true };
       });
     },
   };

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { AlertTriangle, ArrowRight, CalendarClock, Lightbulb, ShieldAlert, Siren } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock, Lightbulb, ShieldAlert, Siren, LockKeyhole } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { DayCell } from "../components/DayCell";
 import { Badge } from "../components/Badge";
@@ -12,6 +12,7 @@ import { useAppData } from "../helpers/useAppData";
 import { scheduleEngine } from "../helpers/scheduleEngine";
 import { buildScheduleSnapshot } from "../helpers/buildScheduleSnapshot";
 import { labels } from "../helpers/labels";
+import { LOCKER_COUNT } from "../helpers/api";
 import styles from "./_index.module.css";
 
 const HORIZON = 30;
@@ -107,6 +108,20 @@ export default function DashboardPage() {
             </div>
           );
         })()}
+        {data && (
+          <Link to="/armarios" className={styles.lockersCard}>
+            <LockKeyhole size={18} />
+            <span className={styles.micro}>Armários</span>
+            <span>
+              <b className={styles.lockersBusy}>{data.lockers.length}</b> {data.lockers.length === 1 ? "ocupado" : "ocupados"} ·{" "}
+              <b className={styles.lockersFree}>{LOCKER_COUNT - data.lockers.length}</b>{" "}
+              {LOCKER_COUNT - data.lockers.length === 1 ? "livre" : "livres"} de {LOCKER_COUNT}
+            </span>
+            <span className={styles.lockersLink}>
+              Ver mapa <ArrowRight size={14} />
+            </span>
+          </Link>
+        )}
         {labels.sectors.map((sector) => {
           const todayView = snapshot?.bySector[sector][0];
           const ok = todayView ? todayView.coverage >= todayView.min : true;

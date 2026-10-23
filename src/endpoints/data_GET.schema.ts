@@ -62,6 +62,16 @@ export type HolidayDTO = {
   compDate: string | null;
 };
 
+/** Porta ocupada do armário ("01".."24"); portas livres não têm registro. */
+export type LockerDTO = {
+  id: string;
+  name: string;
+  sector: string | null;
+  since: string | null;
+  note: string | null;
+  technicianId: number | null;
+};
+
 export type PatternDTO = {
   id: number;
   sector: Sector;
@@ -80,4 +90,5 @@ export type OutputType = {
   patterns: PatternDTO[];
   onCallShifts: OnCallShiftDTO[];
   holidays: HolidayDTO[];
+  lockers: LockerDTO[];
 };

@@ -11,6 +11,9 @@ let store;
 let ops;
 let mainWindow;
 
+// datas e textos do navegador interno sempre no padrão brasileiro (dd/mm/aaaa)
+app.commandLine.appendSwitch("lang", "pt-BR");
+
 function dbPath() {
   return process.env.ESCALA_DB_PATH || path.join(app.getPath("documents"), "Escala Técnica", "escala-tecnica.sqlite");
 }

@@ -39,5 +39,7 @@ export function useAppMutations() {
     saveHoliday: useMutation(opts(api.saveHoliday, "Feriado salvo")),
     deleteHoliday: useMutation(opts(api.deleteHoliday, "Feriado removido")),
     importHolidays: useMutation(opts(api.importHolidays)),
+    saveLocker: useMutation(opts(api.saveLocker, "Armário salvo")),
+    freeLocker: useMutation(opts(api.freeLocker, "Armário liberado")),
   };
 }
