@@ -338,6 +338,7 @@ function createOperations(store) {
         lockers: store
           .all("SELECT id, name, sector, since, note, technician_id FROM lockers ORDER BY id")
           .map((l) => ({ id: l.id, name: l.name, sector: l.sector, since: l.since, note: l.note, technicianId: l.technician_id })),
+        motorConfig: parse(store.get("SELECT value FROM meta WHERE key = 'motor_config'")?.value, null),
       };
     },
 
@@ -423,6 +424,25 @@ function createOperations(store) {
           store.run("INSERT INTO on_call_shifts (team_id, weekend_start, comp_dates) VALUES (?,?,?)", [s.teamId, s.weekendStart, JSON.stringify(s.compDates)]);
         }
         return { created: i.shifts.length };
+      });
+    },
+    /** Preferências do motor de plantão (ordem do rodízio, duplas fora do rodízio, regra do feriado de segunda). */
+    saveMotorConfig(i) {
+      return store.write(() => {
+        store.run("INSERT OR REPLACE INTO meta (key, value) VALUES ('motor_config', ?)", [JSON.stringify(i)]);
+        return { ok: true };
+      });
+    },
+    /** Ajuste pontual do plantão (troca de duplas por viagem/ausência) numa transação. */
+    applyOnCallAdjust(i) {
+      return store.write(() => {
+        for (const u of i.shifts) {
+          store.run("UPDATE on_call_shifts SET team_id = ?, notes = ? WHERE id = ?", [u.teamId, u.notes || null, u.id]);
+        }
+        for (const h of i.holidays) {
+          store.run("UPDATE holidays SET on_call_team_ids = ? WHERE id = ?", [JSON.stringify([...new Set(h.onCallTeamIds)]), h.id]);
+        }
+        return { changed: i.shifts.length + i.holidays.length };
       });
     },
     /** Motor de plantão: grava o rodízio dos dois setores, os plantões de feriado e a escala base 6x1 numa transação. */

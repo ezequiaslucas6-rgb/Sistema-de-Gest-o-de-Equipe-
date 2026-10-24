@@ -446,3 +446,59 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+.order li.off {
+  opacity: 0.5;
+}
+
+.order li.off .onames {
+  text-decoration: line-through;
+}
+
+.inBtn,
+.inBtnOff {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--success);
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  padding: 1px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inBtnOff {
+  color: var(--muted-foreground);
+  border-style: dashed;
+}
+
+.quick {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.quick button {
+  border: none;
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.74rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.scaleTag {
+  display: inline-block;
+  margin-left: 8px;
+  font-family: var(--font-family-monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--foreground);
+  color: var(--background);
+}

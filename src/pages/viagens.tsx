@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
-import { ChevronLeft, ChevronRight, FileDown, Pencil, Plane, Plus, Printer, Save, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileDown, Pencil, Plane, Plus, Printer, Repeat, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
@@ -17,6 +17,8 @@ import { scheduleEngine } from "../helpers/scheduleEngine";
 import { labels } from "../helpers/labels";
 import type { TripStatus } from "../helpers/schema";
 import type { TripDTO, TripSettingsDTO } from "../endpoints/data_GET.schema";
+import { planOnCallAdjustment } from "../helpers/onCallMotor";
+import { toast } from "../helpers/toast";
 import styles from "./viagens.module.css";
 
 type Form = {
@@ -70,7 +72,7 @@ function statusVariant(s: TripStatus): "outline" | "warning" | "success" | "seco
 
 export default function TripsPage() {
   const { data, error } = useAppData();
-  const { saveTrip, setTripStatus, deleteTrip, saveTripSettings } = useAppMutations();
+  const { saveTrip, setTripStatus, deleteTrip, saveTripSettings, applyOnCallAdjust } = useAppMutations();
   const now = nowLocal();
   const [month, setMonth] = useState(now.slice(0, 7));
   const [scope, setScope] = useState<"todas" | "abertas" | "pagas">("todas");
@@ -194,8 +196,25 @@ export default function TripsPage() {
     );
   }, [form, settings]);
 
+  // viagem em fim de semana/feriado de plantão: o plantão passa para outra dupla automaticamente
+  const onCallAdjust = useMemo(() => {
+    if (!data || !form || !form.technicianIds.length || !/^\d{4}-\d{2}-\d{2}/.test(form.departAt) || !/^\d{4}-\d{2}-\d{2}/.test(form.returnAt)) return null;
+    const end = (form.returnedAt || form.returnAt).slice(0, 10);
+    if (end < form.departAt.slice(0, 10)) return null;
+    return planOnCallAdjustment(
+      { ...data, trips: data.trips.filter((t) => t.id !== form.id) },
+      {
+        technicianIds: form.technicianIds.map(Number),
+        start: form.departAt.slice(0, 10),
+        end,
+        label: `viagem para ${form.destination || "o destino"}`,
+      },
+    );
+  }, [data, form]);
+
   const submit = () => {
     if (!form) return;
+    const adjust = onCallAdjust;
     saveTrip.mutate(
       {
         id: form.id,
@@ -210,7 +229,19 @@ export default function TripsPage() {
         advance: Number(form.advance.replace(",", ".")) || 0,
         notes: form.notes || null,
       },
-      { onSuccess: () => setForm(null) },
+      {
+        onSuccess: () => {
+          setForm(null);
+          if (adjust && (adjust.shifts.length || adjust.holidays.length)) {
+            applyOnCallAdjust.mutate(
+              { shifts: adjust.shifts, holidays: adjust.holidays },
+              { onSuccess: () => toast(`Plantão ajustado — ${adjust.messages.join(" ")}`) },
+            );
+          } else if (adjust?.messages.length) {
+            toast.error(adjust.messages.join(" "));
+          }
+        },
+      },
     );
   };
 
@@ -614,6 +645,16 @@ export default function TripsPage() {
                   {formCalc.full === 0 && formCalc.half === 0 && settings && (
                     <div className={styles.meta}>Sem diária: menos de {settings.minHoursHalf}h fora e sem pernoite.</div>
                   )}
+                </div>
+              )}
+              {onCallAdjust && onCallAdjust.messages.length > 0 && (
+                <div className={styles.onCallBox}>
+                  <div className={styles.micro}>
+                    <Repeat size={12} /> Plantão · ajuste automático ao salvar
+                  </div>
+                  {onCallAdjust.messages.map((m, i) => (
+                    <div key={i}>{m}</div>
+                  ))}
                 </div>
               )}
             </div>

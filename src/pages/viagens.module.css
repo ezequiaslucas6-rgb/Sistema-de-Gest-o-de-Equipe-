@@ -316,3 +316,22 @@
     display: none;
   }
 }
+
+.onCallBox {
+  margin-top: var(--spacing-3);
+  padding: var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--warning) 50%, var(--border));
+  background: color-mix(in srgb, var(--warning) 8%, var(--card));
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.onCallBox .micro {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--warning);
+}

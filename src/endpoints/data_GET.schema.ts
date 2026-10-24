@@ -105,6 +105,13 @@ export type PatternDTO = {
   daysOff: PatternDays;
 };
 
+export type MotorConfigDTO = {
+  order: { suporte: number[]; infraestrutura: number[] };
+  excluded: number[];
+  mondayRule: "anterior" | "seguinte";
+  respectAbsences: boolean;
+};
+
 export type OutputType = {
   teams: TeamDTO[];
   technicians: TechnicianDTO[];
@@ -116,4 +123,6 @@ export type OutputType = {
   lockers: LockerDTO[];
   trips: TripDTO[];
   tripSettings: TripSettingsDTO;
+  /** preferências salvas do motor de plantão (null até a primeira gravação) */
+  motorConfig: MotorConfigDTO | null;
 };

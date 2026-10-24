@@ -135,6 +135,21 @@ export const onCallPlanSchema = z.object({
 /** Motor de plantão: grava rodízio + feriados + escala base numa única transação. */
 export const applyOnCallPlan = (body: z.infer<typeof onCallPlanSchema>) => dbCall<{ created: number }>("applyOnCallPlan", onCallPlanSchema.parse(body));
 
+export const motorConfigSchema = z.object({
+  order: z.object({ suporte: z.array(z.number().int()), infraestrutura: z.array(z.number().int()) }),
+  excluded: z.array(z.number().int()),
+  mondayRule: z.enum(["anterior", "seguinte"]),
+  respectAbsences: z.boolean(),
+});
+export const saveMotorConfig = (body: z.infer<typeof motorConfigSchema>) => dbCall<Ok>("saveMotorConfig", motorConfigSchema.parse(body));
+
+export const onCallAdjustSchema = z.object({
+  shifts: z.array(z.object({ id: z.number().int(), teamId: z.number().int(), notes: z.string().nullable() })),
+  holidays: z.array(z.object({ id: z.number().int(), onCallTeamIds: z.array(z.number().int()) })),
+});
+/** Troca de duplas no plantão (ex.: quando uma viagem cai no fim de semana de plantão). */
+export const applyOnCallAdjust = (body: z.infer<typeof onCallAdjustSchema>) => dbCall<{ changed: number }>("applyOnCallAdjust", onCallAdjustSchema.parse(body));
+
 export const onCallSchema = z
   .object({
     id: z.number().int().optional(),

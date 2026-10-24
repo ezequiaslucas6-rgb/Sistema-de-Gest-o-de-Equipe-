@@ -19,41 +19,64 @@ const short = (d: string) => `${scheduleEngine.WEEKDAY_SHORT[scheduleEngine.week
 
 export default function MotorPage() {
   const { data, error } = useAppData();
-  const { applyOnCallPlan } = useAppMutations();
+  const { applyOnCallPlan, saveMotorConfig } = useAppMutations();
   const today = scheduleEngine.todayIso();
 
   const [from, setFrom] = useState(() => saturdayOnOrBefore(today));
   const [to, setTo] = useState<string | null>(null);
   const [order, setOrder] = useState<Record<Sector, number[]> | null>(null);
   const [startTeam, setStartTeam] = useState<Record<Sector, number | null>>({ suporte: null, infraestrutura: null });
-  const [mondayRule, setMondayRule] = useState<MondayRule>("anterior");
+  const [mondayRule, setMondayRule] = useState<MondayRule>("seguinte");
+  const [excluded, setExcluded] = useState<number[]>([]);
   const [respect, setRespect] = useState(true);
   const [confirm, setConfirm] = useState(false);
 
   // padrões: ordem por código, fim = véspera do 5x2, abre quem já está de plantão no primeiro fim de semana
   useEffect(() => {
     if (!data || order) return;
+    const cfg = data.motorConfig;
+    const out = cfg?.excluded.filter((id) => data.teams.some((t) => t.id === id)) ?? [];
     const o = {} as Record<Sector, number[]>;
     const st = {} as Record<Sector, number | null>;
     for (const s of labels.sectors) {
-      o[s] = data.teams.filter((t) => t.sector === s).sort((a, b) => a.code.localeCompare(b.code)).map((t) => t.id);
-      const current = data.onCallShifts.find((x) => x.weekendStart === from && o[s].includes(x.teamId));
+      const ids = data.teams.filter((t) => t.sector === s).sort((a, b) => a.code.localeCompare(b.code)).map((t) => t.id);
+      // ordem salva primeiro; duplas novas entram no fim
+      const saved = (cfg?.order[s] ?? []).filter((id) => ids.includes(id));
+      o[s] = [...saved, ...ids.filter((id) => !saved.includes(id))];
+      const active = o[s].filter((id) => !out.includes(id));
+      const current = data.onCallShifts.find((x) => x.weekendStart === from && active.includes(x.teamId));
       if (current) st[s] = current.teamId;
       else {
         const last = data.onCallShifts
-          .filter((x) => x.weekendStart < from && o[s].includes(x.teamId))
+          .filter((x) => x.weekendStart < from && active.includes(x.teamId))
           .sort((a, b) => b.weekendStart.localeCompare(a.weekendStart))[0];
-        st[s] = last ? o[s][(o[s].indexOf(last.teamId) + 1) % o[s].length] : (o[s][0] ?? null);
+        st[s] = last ? active[(active.indexOf(last.teamId) + 1) % active.length] : (active[0] ?? null);
       }
     }
+    if (cfg) {
+      setMondayRule(cfg.mondayRule);
+      setRespect(cfg.respectAbsences);
+    }
+    setExcluded(out);
     setOrder(o);
     setStartTeam(st);
     setTo(defaultSixOneEnd(data, from));
   }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const result = useMemo(
-    () => (data && order && to ? runMotor({ data, from, to, order, startTeam, mondayRule, respectAbsences: respect }) : null),
-    [data, order, to, from, startTeam, mondayRule, respect],
+    () =>
+      data && order && to
+        ? runMotor({
+            data,
+            from,
+            to,
+            order: { suporte: order.suporte.filter((id) => !excluded.includes(id)), infraestrutura: order.infraestrutura.filter((id) => !excluded.includes(id)) },
+            startTeam,
+            mondayRule,
+            respectAbsences: respect,
+          })
+        : null,
+    [data, order, to, from, startTeam, mondayRule, respect, excluded],
   );
 
   const teamById = useMemo(() => new Map(data?.teams.map((t) => [t.id, t]) ?? []), [data]);
@@ -76,8 +99,17 @@ export default function MotorPage() {
     setOrder({ ...order, [sector]: list });
   };
 
+  const toggleExcluded = (sector: Sector, id: number) => {
+    const next = excluded.includes(id) ? excluded.filter((x) => x !== id) : [...excluded, id];
+    setExcluded(next);
+    if (startTeam[sector] === id && next.includes(id)) {
+      setStartTeam({ ...startTeam, [sector]: order?.[sector].find((x) => !next.includes(x)) ?? null });
+    }
+  };
+
   const apply = () => {
-    if (!result || !data) return;
+    if (!result || !data || !order) return;
+    saveMotorConfig.mutate({ order, excluded, mondayRule, respectAbsences: respect });
     const lastSat = result.saturdays[result.saturdays.length - 1] ?? from;
     applyOnCallPlan.mutate(
       {
@@ -115,8 +147,8 @@ export default function MotorPage() {
       </Helmet>
       <PageHeader
         eyebrow="Geração automática · banco de horas"
-        title="Motor de plantão 6x1"
-        description="Gera o rodízio de plantão dos dois setores até o fim da escala 6x1, com folgas de compensação, plantões de feriado e trocas automáticas quando alguém está ausente."
+        title="Motor de plantão"
+        description="Gera o rodízio de plantão dos dois setores (6x1 e depois 5x2), com folgas de compensação, plantões de feriado e trocas automáticas quando alguém está ausente ou viajando."
         actions={
           <Button className={styles.gradBtn} disabled={!result || weekendsCount === 0} onClick={() => setConfirm(true)}>
             <Sparkles size={16} /> Aplicar na escala
@@ -135,8 +167,14 @@ export default function MotorPage() {
               <DateField value={from} onChange={(v) => setFrom(saturdayOnOrBefore(v))} onlyWeekday={6} />
             </div>
             <div>
-              <label className={styles.label}>Fim da escala 6x1</label>
+              <label className={styles.label}>Gerar até</label>
               {to && <DateField value={to} onChange={setTo} />}
+              {data && (
+                <div className={styles.quick}>
+                  <button onClick={() => setTo(defaultSixOneEnd(data, from))}>fim do 6x1</button>
+                  <button onClick={() => setTo(scheduleEngine.addDays(from, 7 * 26 - 1))}>+6 meses (inclui 5x2)</button>
+                </div>
+              )}
             </div>
           </div>
           <div className={styles.hint}>
@@ -152,11 +190,13 @@ export default function MotorPage() {
                   <ol>
                     {order[sector].map((id, i) => {
                       const first = startTeam[sector] === id;
+                      const off = excluded.includes(id);
                       return (
-                        <li key={id} className={first ? styles.first : ""}>
+                        <li key={id} className={`${first ? styles.first : ""} ${off ? styles.off : ""}`}>
                           <button
                             className={styles.starBtn}
                             title="Abrir o rodízio com esta dupla"
+                            disabled={off}
                             onClick={() => setStartTeam({ ...startTeam, [sector]: id })}
                           >
                             <Star size={14} fill={first ? "currentColor" : "none"} />
@@ -164,6 +204,13 @@ export default function MotorPage() {
                           <span className={styles.ocode}>{teamById.get(id)?.code}</span>
                           <span className={styles.onames}>{names(id)}</span>
                           {first && <span className={styles.firstTag}>abre {from.slice(8)}/{from.slice(5, 7)}</span>}
+                          <button
+                            className={off ? styles.inBtnOff : styles.inBtn}
+                            onClick={() => toggleExcluded(sector, id)}
+                            title={off ? "Colocar de volta no rodízio de plantão" : "Tirar esta dupla do rodízio de plantão"}
+                          >
+                            {off ? "fora" : "no rodízio"}
+                          </button>
                           <span className={styles.arrows}>
                             <button onClick={() => move(sector, i, -1)} disabled={i === 0} aria-label="Subir">
                               <ArrowUp size={13} />
@@ -204,8 +251,8 @@ export default function MotorPage() {
           <h2 className={styles.h2}>Regras aplicadas</h2>
           <ul>
             <li>
-              <b>1 dupla por setor</b> em cada fim de semana, em rodízio fixo (Suporte a cada {order?.suporte.length ?? 4} semanas, Backbone a cada{" "}
-              {order?.infraestrutura.length ?? 3}).
+              <b>1 dupla por setor</b> em cada fim de semana, em rodízio fixo (Suporte a cada {order?.suporte.filter((id) => !excluded.includes(id)).length ?? 4} semanas, Backbone a cada{" "}
+              {order?.infraestrutura.filter((id) => !excluded.includes(id)).length ?? 3}).
             </li>
             <li>
               Plantão: <b>sábado {data?.settings[0]?.onCallSaturday.replace("-", "–")}</b> e <b>domingo {data?.settings[0]?.onCallSunday.replace(/-/g, "–").replace(",", " e ")}</b> (sábado de manhã é expediente normal do 6x1).
@@ -286,6 +333,9 @@ export default function MotorPage() {
                           <b>
                             {sat.slice(8)}–{scheduleEngine.addDays(sat, 1).slice(8)}/{scheduleEngine.addDays(sat, 1).slice(5, 7)}
                           </b>
+                          {result.shifts.find((x) => x.saturday === sat)?.scale && (
+                            <span className={styles.scaleTag}>{result.shifts.find((x) => x.saturday === sat)?.scale}</span>
+                          )}
                           {sat === currentSat && <span className={styles.nowTag}>este fim de semana</span>}
                           {hs.map((h) => (
                             <div key={h.holidayId} className={styles.hol}>

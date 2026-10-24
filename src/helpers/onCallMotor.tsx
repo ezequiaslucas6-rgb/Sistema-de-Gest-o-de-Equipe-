@@ -37,6 +37,8 @@ export interface MotorShift {
   saturday: string;
   teamId: number;
   compDates: string[];
+  /** escala vigente no fim de semana (define a folga: 6x1 sex+sáb, 5x2 qui+sex) */
+  scale: string | null;
   /** troca automática: dupla que deveria estar e o motivo */
   swap?: { expectedTeamId: number; reason: string };
 }
@@ -165,6 +167,7 @@ export function runMotor(input: MotorInput): MotorResult {
         saturday: sat,
         teamId,
         compDates: scheduleEngine.defaultCompDates(sat, sector, data.patterns, data.holidays),
+        scale: scheduleEngine.patternForDate(data.patterns, sector, sat)?.scaleType ?? null,
         swap: teamId !== expected ? { expectedTeamId: expected, reason: reason || "evitar plantão em fins de semana seguidos" } : undefined,
       });
     }
@@ -282,4 +285,122 @@ export function runMotor(input: MotorInput): MotorResult {
   const missingBase = labels.sectors.filter((s) => scheduleEngine.patternForDate(data.patterns, s, from)?.scaleType !== "6x1");
 
   return { saturdays, shifts, holidays, bank, warnings, missingBase };
+}
+
+export interface OnCallAdjustment {
+  shifts: { id: number; teamId: number; notes: string | null }[];
+  holidays: { id: number; onCallTeamIds: number[] }[];
+  /** frases para mostrar ao usuário */
+  messages: string[];
+}
+
+/**
+ * Ajuste automático do plantão quando técnicos ficam fora (viagem): a dupla afetada troca o fim de semana
+ * com a próxima dupla do setor que estiver livre, e assume o próximo plantão dela (o rodízio continua justo).
+ * Feriados que a dupla faria passam para quem assumiu o fim de semana.
+ */
+export function planOnCallAdjustment(
+  data: OutputType,
+  away: { technicianIds: number[]; start: string; end: string; label: string },
+  today = scheduleEngine.todayIso(),
+): OnCallAdjustment {
+  const out: OnCallAdjustment = { shifts: [], holidays: [], messages: [] };
+  const teamById = new Map(data.teams.map((t) => [t.id, t]));
+  const code = (id: number) => teamById.get(id)?.code ?? `#${id}`;
+  const fmt = (d: string) => scheduleEngine.formatDate(d).slice(0, 5);
+  const inAway = (d: string) => d >= away.start && d <= away.end;
+  const affectedTeams = [...new Set(away.technicianIds.map((id) => data.technicians.find((t) => t.id === id)?.teamId).filter((x): x is number => x != null))];
+  const membersOf = (teamId: number) => data.technicians.filter((t) => t.teamId === teamId).map((t) => t.id);
+  const busy = (teamId: number, dates: string[]) =>
+    membersOf(teamId).some((m) =>
+      dates.some(
+        (d) =>
+          (away.technicianIds.includes(m) && inAway(d)) ||
+          scheduleEngine.isAbsent(data.absences, m, d) ||
+          scheduleEngine.tripForTechnician(data.trips, m, d),
+      ),
+    );
+  // plantões depois das trocas já planejadas (para não trocar duas vezes o mesmo fim de semana)
+  const shifts = data.onCallShifts.map((s) => ({ ...s }));
+  const shiftsOf = (teamId: number) => shifts.filter((s) => s.teamId === teamId);
+  const weekend = (sat: string) => [sat, scheduleEngine.addDays(sat, 1)];
+
+  for (const teamA of affectedTeams) {
+    const sector = teamById.get(teamA)?.sector;
+    if (!sector) continue;
+    const conflicts = shiftsOf(teamA).filter((s) => s.weekendStart >= scheduleEngine.addDays(today, -1) && weekend(s.weekendStart).some(inAway));
+    for (const shift of conflicts) {
+      const W = shift.weekendStart;
+      const satsOf = (teamId: number) => shiftsOf(teamId).map((x) => x.weekendStart);
+      // depois da troca ninguém pode ficar com dois fins de semana seguidos
+      const noBackToBack = (sats: string[], changed: string) =>
+        !sats.includes(scheduleEngine.addDays(changed, -7)) && !sats.includes(scheduleEngine.addDays(changed, 7));
+      const candidates = data.teams
+        .filter((t) => t.sector === sector && t.id !== teamA && !affectedTeams.includes(t.id))
+        .filter((t) => !busy(t.id, weekend(W)) && !satsOf(t.id).includes(W))
+        .map((t) => {
+          const bSats = satsOf(t.id);
+          const aSats = satsOf(teamA).filter((x) => x !== W);
+          // próximo plantão da candidata que a dupla afetada pode assumir em troca
+          const next = shiftsOf(t.id)
+            .filter((x) => x.weekendStart > W)
+            .sort((a, b) => a.weekendStart.localeCompare(b.weekendStart))
+            .find(
+              (x) =>
+                !busy(teamA, weekend(x.weekendStart)) &&
+                noBackToBack([...bSats.filter((b) => b !== x.weekendStart)], W) &&
+                noBackToBack(aSats, x.weekendStart),
+            );
+          const ok = next ? true : noBackToBack(bSats, W);
+          return { team: t, next, ok };
+        })
+        .filter((c) => c.ok)
+        .sort((a, b) => (a.next?.weekendStart ?? "9999").localeCompare(b.next?.weekendStart ?? "9999"));
+      const pick = candidates[0];
+      if (!pick) {
+        out.messages.push(`${code(teamA)} está de plantão em ${fmt(W)} durante ${away.label}, mas nenhuma outra dupla do setor está livre — ajuste manualmente em Plantões.`);
+        continue;
+      }
+      const B = pick.team.id;
+      shift.teamId = B;
+      out.shifts.push({ id: shift.id, teamId: B, notes: `Troca automática: ${code(teamA)} fora (${away.label}); ${code(B)} assumiu` });
+      if (pick.next) {
+        const other = shifts.find((x) => x.id === pick.next!.id)!;
+        other.teamId = teamA;
+        out.shifts.push({ id: other.id, teamId: teamA, notes: `Troca automática com ${code(B)} (${fmt(W)})` });
+        out.messages.push(`Plantão de ${fmt(W)}: ${code(B)} assume no lugar de ${code(teamA)}, que fica com o plantão de ${fmt(other.weekendStart)}.`);
+      } else {
+        out.messages.push(`Plantão de ${fmt(W)}: ${code(B)} assume no lugar de ${code(teamA)}.`);
+      }
+      // feriado no sábado/domingo é coberto pelo próprio plantão: acompanha a troca
+      const followWeekend = (sat: string, fromTeam: number, toTeam: number) => {
+        for (const h of data.holidays) {
+          if (!weekend(sat).includes(h.date) || !h.onCallTeamIds.includes(fromTeam)) continue;
+          const cur = out.holidays.find((x) => x.id === h.id);
+          const ids = (cur?.onCallTeamIds ?? h.onCallTeamIds).map((id) => (id === fromTeam ? toTeam : id));
+          if (cur) cur.onCallTeamIds = ids;
+          else out.holidays.push({ id: h.id, onCallTeamIds: ids });
+          out.messages.push(`Feriado ${h.name} (${fmt(h.date)}) acompanha o plantão: ${code(toTeam)}.`);
+        }
+      };
+      followWeekend(W, teamA, B);
+      if (pick.next) followWeekend(pick.next.weekendStart, B, teamA);
+      // feriado ligado a este fim de semana que estava com a dupla afetada
+      for (const h of data.holidays) {
+        if (!h.onCallTeamIds.includes(teamA) || !inAway(h.date) || h.date < today) continue;
+        if (out.holidays.some((x) => x.id === h.id)) continue;
+        out.holidays.push({ id: h.id, onCallTeamIds: h.onCallTeamIds.map((id) => (id === teamA ? B : id)) });
+        out.messages.push(`Feriado ${h.name} (${fmt(h.date)}): plantão passa de ${code(teamA)} para ${code(B)}.`);
+      }
+    }
+    // feriado em dia útil durante a ausência, sem fim de semana em conflito
+    for (const h of data.holidays) {
+      if (!h.onCallTeamIds.includes(teamA) || !inAway(h.date) || h.date < today || out.holidays.some((x) => x.id === h.id)) continue;
+      const alt = data.teams.find((t) => t.sector === sector && t.id !== teamA && !affectedTeams.includes(t.id) && !busy(t.id, [h.date]));
+      if (!alt) continue;
+      out.holidays.push({ id: h.id, onCallTeamIds: h.onCallTeamIds.map((id) => (id === teamA ? alt.id : id)) });
+      out.messages.push(`Feriado ${h.name} (${fmt(h.date)}): plantão passa de ${code(teamA)} para ${code(alt.id)}.`);
+    }
+  }
+  return out;
 }
