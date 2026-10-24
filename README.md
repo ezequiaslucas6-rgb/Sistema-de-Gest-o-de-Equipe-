@@ -33,9 +33,12 @@ feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pe
 
 | Tela | O que faz |
 |---|---|
-| Painel | Duplas em campo hoje, cobertura dos próximos 14 dias, plantão do fim de semana, alertas e sugestões |
+| Painel | Centro de operações: navegação por dia (← → / H), filtro de setor, indicadores, gráfico de cobertura clicável, detalhes da dupla, status "agora" ao vivo, próximos eventos, alertas e sugestões |
+| Modo TV | Tela cheia escura para o monitor do NOC: cobertura por setor, duplas, próximos 7 dias e faixa de alertas; atualiza sozinho (Esc sai, F tela cheia) |
 | Escala | Grade mensal por dupla; clique para registrar ausência ou mover folga |
-| Plantões | Regras do plantão, rodízio automático, compensação e banco de horas |
+| Plantões | Regras do plantão, lançamentos manuais, compensação e banco de horas |
+| Motor de plantão | Gera o rodízio dos dois setores até o fim do 6x1, plantões de feriado, folgas de compensação, trocas automáticas por ausência e banco de horas projetado |
+| Viagens e diárias | Viagens da equipe (dupla fica "V" na escala), cálculo de diárias cheias/meias, adiantamento, status até o pagamento, relatório por técnico e CSV |
 | Feriados | Importação dos feriados nacionais, plantão no feriado e folga no dia útil seguinte |
 | Planejamento 6x1 → 5x2 | Gerador de escala e comparativo entre as duas |
 | Equipes e duplas | Cadastro de técnicos e duplas |
@@ -49,6 +52,10 @@ feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pe
 - **Compensação do plantão:** 6x1 → sexta + sábado seguintes; 5x2 → quinta + sexta seguintes; folga em feriado passa
   para o próximo dia útil.
 - **Feriados:** folga geral coberta pela dupla de plantão; quem trabalha folga no próximo dia útil.
+- **Feriado em dia útil (motor):** a dupla do plantão do fim de semana daquela semana faz o feriado e folga no próximo
+  dia útil; feriado na segunda usa o fim de semana anterior (emenda) ou o seguinte, conforme a opção escolhida.
+- **Diárias:** cheia por pernoite, meia no dia do retorno e em viagem no mesmo dia acima do mínimo de horas (valores
+  configuráveis em "Regras das diárias").
 - **Banco de horas:** crédito = horas de plantão; débito = horas dos dias de folga que seriam trabalhados.
 - **Armários:** o ocupante pode ser um técnico cadastrado (nome e setor preenchidos automaticamente) ou outra pessoa.
   Se o técnico for excluído, o nome continua no armário.
