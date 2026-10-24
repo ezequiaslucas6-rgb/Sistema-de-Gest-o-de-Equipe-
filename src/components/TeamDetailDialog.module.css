@@ -1,0 +1,145 @@
+.dialog {
+  width: 34rem !important;
+}
+
+.eyebrowSupport,
+.eyebrowInfra {
+  font-family: var(--font-family-monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sector-support);
+}
+
+.eyebrowInfra {
+  color: var(--sector-infra);
+}
+
+.title {
+  font-family: var(--font-family-display);
+  font-size: 1.4rem !important;
+}
+
+.code {
+  font-family: var(--font-family-monospace);
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.vehicle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--spacing-3);
+}
+
+.members {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-2);
+  margin: var(--spacing-4) 0;
+}
+
+.member {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+  padding: var(--spacing-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--success) 14%, var(--card));
+  color: var(--success);
+}
+
+.absent .avatar {
+  background: color-mix(in srgb, var(--error) 12%, var(--card));
+  color: var(--error);
+}
+
+.trip .avatar {
+  background: color-mix(in srgb, var(--sector-infra) 14%, var(--card));
+  color: var(--sector-infra);
+}
+
+.absent .memberName {
+  text-decoration: line-through;
+  color: var(--error);
+}
+
+.memberName {
+  font-weight: 600;
+}
+
+.memberMeta {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.empty {
+  color: var(--muted-foreground);
+}
+
+.micro {
+  font-family: var(--font-family-monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: var(--spacing-2);
+}
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 3px;
+  margin-bottom: var(--spacing-4);
+}
+
+.stripDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-family-monospace);
+  font-size: 0.6rem;
+  color: var(--muted-foreground);
+}
+
+.stripCell {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 26px !important;
+  font-size: 0.6rem !important;
+  cursor: default !important;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+}
+
+.facts .micro {
+  margin-bottom: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-4);
+}

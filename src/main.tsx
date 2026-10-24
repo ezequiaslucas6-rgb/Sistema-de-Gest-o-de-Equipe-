@@ -14,6 +14,7 @@ import TeamsPage from "./pages/equipes";
 import AbsencesPage from "./pages/ausencias";
 import LockersPage from "./pages/armarios";
 import TripsPage from "./pages/viagens";
+import TvPage from "./pages/tv";
 
 const pages = [
   { path: "/", element: <DashboardPage /> },
@@ -36,6 +37,8 @@ createRoot(document.getElementById("root")!).render(
           {pages.map((p) => (
             <Route key={p.path} path={p.path} element={<AppShell>{p.element}</AppShell>} />
           ))}
+          {/* modo TV fica fora do menu lateral, em tela cheia */}
+          <Route path="/tv" element={<TvPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </GlobalContextProviders>
