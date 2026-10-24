@@ -54,6 +54,8 @@ feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pe
 - **Feriados:** folga geral coberta pela dupla de plantão; quem trabalha folga no próximo dia útil.
 - **Feriado em dia útil (motor):** a dupla do plantão do fim de semana daquela semana faz o feriado e folga no próximo
   dia útil; feriado na segunda usa o fim de semana anterior (emenda) ou o seguinte, conforme a opção escolhida.
+- **Diárias só para os destinos da lista** (padrão: Rondolândia, Fazenda Castanhal, Fazenda Peralta); cada viagem pode
+  ser marcada como "gera diária: sim/não". **Viagem sobre um plantão** troca a dupla automaticamente com a próxima livre.
 - **Diárias:** cheia por pernoite, meia no dia do retorno e em viagem no mesmo dia acima do mínimo de horas (valores
   configuráveis em "Regras das diárias").
 - **Banco de horas:** crédito = horas de plantão; débito = horas dos dias de folga que seriam trabalhados.
