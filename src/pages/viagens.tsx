@@ -34,7 +34,11 @@ type Form = {
   advance: string;
   status: TripStatus;
   notes: string;
+  /** diária: automática pelo destino, sempre ou nunca */
+  perDiem: "auto" | "sim" | "nao";
 };
+
+const perDiemValue = (v: Form["perDiem"]) => (v === "auto" ? null : v === "sim");
 
 const money = scheduleEngine.formatMoney;
 const STATUS_ORDER: TripStatus[] = ["planejada", "em_viagem", "retornou", "prestacao", "paga"];
@@ -78,6 +82,7 @@ export default function TripsPage() {
   const [scope, setScope] = useState<"todas" | "abertas" | "pagas">("todas");
   const [form, setForm] = useState<Form | null>(null);
   const [rules, setRules] = useState<TripSettingsDTO | null>(null);
+  const [newDest, setNewDest] = useState("");
 
   const settingsKey = data ? JSON.stringify(data.tripSettings) : "";
   useEffect(() => {
@@ -165,6 +170,7 @@ export default function TripsPage() {
             advance: String(t.advance || ""),
             status: t.status,
             notes: t.notes ?? "",
+            perDiem: t.perDiem == null ? "auto" : t.perDiem ? "sim" : "nao",
           }
         : {
             teamId: "__none",
@@ -178,6 +184,7 @@ export default function TripsPage() {
             advance: "",
             status: "planejada",
             notes: "",
+            perDiem: "auto",
           },
     );
   };
@@ -191,6 +198,8 @@ export default function TripsPage() {
         departAt: form.departAt,
         returnAt: form.returnAt,
         returnedAt: form.returnedAt || null,
+        destination: form.destination,
+        perDiem: perDiemValue(form.perDiem),
       },
       settings,
     );
@@ -228,6 +237,7 @@ export default function TripsPage() {
         status: form.status,
         advance: Number(form.advance.replace(",", ".")) || 0,
         notes: form.notes || null,
+        perDiem: perDiemValue(form.perDiem),
       },
       {
         onSuccess: () => {
@@ -410,8 +420,14 @@ export default function TripsPage() {
                         {!trip.returnedAt && <div className={late ? styles.late : styles.meta}>{late ? "atrasado" : "previsto"}</div>}
                       </td>
                       <td className={`${styles.mono} ${styles.r}`}>
-                        {fmtDiarias(calc.full, calc.half)}
-                        <div className={styles.meta}>{money(calc.perTechnician)}</div>
+                        {calc.eligible ? (
+                          <>
+                            {fmtDiarias(calc.full, calc.half)}
+                            <div className={styles.meta}>{money(calc.perTechnician)}</div>
+                          </>
+                        ) : (
+                          <span className={styles.noPerDiem}>sem diária</span>
+                        )}
                       </td>
                       <td className={`${styles.mono} ${styles.r}`}>{money(calc.total)}</td>
                       <td className={`${styles.mono} ${styles.r}`}>{money(trip.advance)}</td>
@@ -512,6 +528,43 @@ export default function TripsPage() {
                   <Input type="number" min={0} max={24} step="0.5" value={rules.minHoursHalf} onChange={(e) => setRules({ ...rules, minHoursHalf: Number(e.target.value) || 0 })} />
                 </div>
               </div>
+              <div className={styles.destBox}>
+                <label className={styles.label}>Destinos que geram diária (sentido)</label>
+                <div className={styles.destChips}>
+                  {rules.paidDestinations.map((d) => (
+                    <span key={d} className={styles.destChip}>
+                      {d}
+                      <button
+                        aria-label={`Remover ${d}`}
+                        onClick={() => setRules({ ...rules, paidDestinations: rules.paidDestinations.filter((x) => x !== d) })}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {rules.paidDestinations.length === 0 && <span className={styles.meta}>Lista vazia: todas as viagens geram diária.</span>}
+                </div>
+                <form
+                  className={styles.destAdd}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const v = newDest.trim();
+                    if (v && !rules.paidDestinations.some((d) => scheduleEngine.normalizeText(d) === scheduleEngine.normalizeText(v))) {
+                      setRules({ ...rules, paidDestinations: [...rules.paidDestinations, v] });
+                    }
+                    setNewDest("");
+                  }}
+                >
+                  <Input value={newDest} placeholder="Adicionar destino" onChange={(e) => setNewDest(e.target.value)} />
+                  <Button type="submit" variant="outline" size="sm" disabled={!newDest.trim()}>
+                    <Plus size={14} /> Adicionar
+                  </Button>
+                </form>
+                <p className={styles.hint}>
+                  A viagem gera diária quando o destino cita um desses lugares (sem diferença de acento ou maiúscula). Viagem no mesmo sentido com outro
+                  nome: marque "Gera diária: sim" na viagem.
+                </p>
+              </div>
               <div className={styles.switchRow}>
                 <Switch id="half-return" checked={rules.halfOnReturn} onCheckedChange={(v) => setRules({ ...rules, halfOnReturn: v })} />
                 <label htmlFor="half-return">Dia do retorno (após pernoite) vale meia diária</label>
@@ -581,7 +634,15 @@ export default function TripsPage() {
               <div className={styles.row2}>
                 <div>
                   <label className={styles.label}>Destino</label>
-                  <Input value={form.destination} placeholder="Cidade / POP" onChange={(e) => setForm({ ...form, destination: e.target.value })} />
+                  <Input
+                    value={form.destination}
+                    placeholder="Cidade / POP"
+                    list="destinos-diaria"
+                    onChange={(e) => setForm({ ...form, destination: e.target.value })}
+                  />
+                  <datalist id="destinos-diaria">
+                    {settings?.paidDestinations.map((d) => <option key={d} value={d} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label className={styles.label}>Motivo</label>
@@ -627,6 +688,23 @@ export default function TripsPage() {
                   </Select>
                 </div>
               </div>
+              <label className={styles.label}>Gera diária?</label>
+              <Select value={form.perDiem} onValueChange={(v) => setForm({ ...form, perDiem: v as Form["perDiem"] })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">
+                    Automático pelo destino (
+                    {settings && scheduleEngine.tripEligible({ id: 0, technicianIds: [], departAt: "", returnAt: "", returnedAt: null, destination: form.destination }, settings)
+                      ? "gera"
+                      : "não gera"}
+                    )
+                  </SelectItem>
+                  <SelectItem value="sim">Sim — viagem nesse sentido</SelectItem>
+                  <SelectItem value="nao">Não gera diária</SelectItem>
+                </SelectContent>
+              </Select>
               <label className={styles.label}>Observações</label>
               <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               {formCalc && (
@@ -642,7 +720,14 @@ export default function TripsPage() {
                       </>
                     )}
                   </div>
-                  {formCalc.full === 0 && formCalc.half === 0 && settings && (
+                  {!formCalc.eligible && settings && (
+                    <div className={styles.meta}>
+                      {form.perDiem === "nao"
+                        ? "Marcada para não gerar diária."
+                        : `Este destino não gera diária — só ${settings.paidDestinations.join(", ")}. Se for nesse sentido, marque "Gera diária: sim".`}
+                    </div>
+                  )}
+                  {formCalc.eligible && formCalc.full === 0 && formCalc.half === 0 && settings && (
                     <div className={styles.meta}>Sem diária: menos de {settings.minHoursHalf}h fora e sem pernoite.</div>
                   )}
                 </div>

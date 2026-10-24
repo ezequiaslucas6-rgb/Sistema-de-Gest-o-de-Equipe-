@@ -335,3 +335,52 @@
   gap: 4px;
   color: var(--warning);
 }
+
+.noPerDiem {
+  font-family: var(--font-family-base);
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.destBox {
+  width: 100%;
+}
+
+.destChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--spacing-2);
+}
+
+.destChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--sector-infra) 12%, var(--card));
+  color: var(--sector-infra);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.destChip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.destAdd {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: center;
+}

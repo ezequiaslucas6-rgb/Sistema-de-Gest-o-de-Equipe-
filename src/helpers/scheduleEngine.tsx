@@ -77,6 +77,9 @@ export interface TripLike {
   returnAt: string;
   /** retorno real, quando já voltou */
   returnedAt: string | null;
+  destination?: string;
+  /** diária: null/undefined = automática pelo destino, true = sempre, false = nunca */
+  perDiem?: boolean | null;
 }
 
 export interface TripSettingsLike {
@@ -88,6 +91,8 @@ export interface TripSettingsLike {
   minHoursHalf: number;
   /** o dia do retorno, após pernoite, conta como meia diária */
   halfOnReturn: boolean;
+  /** destinos (sentido) que geram diária; lista vazia = todas as viagens geram */
+  paidDestinations?: string[];
 }
 
 export interface TripAllowance {
@@ -101,6 +106,8 @@ export interface TripAllowance {
   perTechnician: number;
   /** valor total da viagem (todos os técnicos) */
   total: number;
+  /** a viagem gera diária (destino da lista ou marcada manualmente) */
+  eligible: boolean;
 }
 
 export interface GenerateInput {
@@ -815,8 +822,23 @@ function minutesOf(dt: string): number {
  * - com pernoite, o dia do retorno vale meia diária (se configurado);
  * - sem pernoite, meia diária quando ficou fora pelo menos as horas mínimas.
  */
+/** Texto sem acento e em minúsculas, para comparar destinos ("Rondolândia" = "rondolandia"). */
+function normalizeText(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+/** A viagem gera diária? Marcação manual vence; senão, o destino precisa citar um dos destinos da lista. */
+function tripEligible(trip: TripLike, settings: TripSettingsLike): boolean {
+  if (trip.perDiem === true || trip.perDiem === false) return trip.perDiem;
+  const list = settings.paidDestinations ?? [];
+  if (list.length === 0) return true;
+  const dest = normalizeText(trip.destination ?? "");
+  return list.some((d) => normalizeText(d) && dest.includes(normalizeText(d)));
+}
+
 function tripAllowance(trip: TripLike, settings: TripSettingsLike): TripAllowance {
   const end = tripEnd(trip);
+  const eligible = tripEligible(trip, settings);
   const hours = Math.max(0, (minutesOf(end) - minutesOf(trip.departAt)) / 60);
   const nights = Math.max(0, diffDays(end.slice(0, 10), trip.departAt.slice(0, 10)));
   let full = 0;
@@ -827,6 +849,10 @@ function tripAllowance(trip: TripLike, settings: TripSettingsLike): TripAllowanc
   } else if (hours >= settings.minHoursHalf) {
     half = 1;
   }
+  if (!eligible) {
+    full = 0;
+    half = 0;
+  }
   const perTechnician = round2(full * settings.fullValue + half * settings.halfValue);
   return {
     nights,
@@ -835,6 +861,7 @@ function tripAllowance(trip: TripLike, settings: TripSettingsLike): TripAllowanc
     half,
     perTechnician,
     total: round2(perTechnician * trip.technicianIds.length),
+    eligible,
   };
 }
 
@@ -883,6 +910,8 @@ export const scheduleEngine = {
   formatDate,
   tripForTechnician,
   tripAllowance,
+  tripEligible,
+  normalizeText,
   tripEnd,
   formatMoney,
 };

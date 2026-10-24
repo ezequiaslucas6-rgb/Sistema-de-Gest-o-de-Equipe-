@@ -215,6 +215,7 @@ export const tripSchema = z
     status: z.enum(TripStatusArrayValues),
     advance: z.number().min(0).max(1_000_000),
     notes: z.string().trim().max(500).nullable(),
+    perDiem: z.boolean().nullable(),
   })
   .refine((v) => v.returnAt >= v.departAt, { message: "O retorno previsto deve ser depois da saída", path: ["returnAt"] })
   .refine((v) => !v.returnedAt || v.returnedAt >= v.departAt, { message: "O retorno real deve ser depois da saída", path: ["returnedAt"] });
@@ -228,5 +229,6 @@ export const tripSettingsSchema = z.object({
   halfValue: z.number().min(0).max(100_000),
   minHoursHalf: z.number().min(0).max(24),
   halfOnReturn: z.boolean(),
+  paidDestinations: z.array(z.string().trim().min(1).max(80)).max(30),
 });
 export const saveTripSettings = (body: z.infer<typeof tripSettingsSchema>) => dbCall<Ok>("saveTripSettings", tripSettingsSchema.parse(body));

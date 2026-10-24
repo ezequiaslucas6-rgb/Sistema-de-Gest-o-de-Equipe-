@@ -86,6 +86,8 @@ export type TripDTO = {
   /** adiantamento total da viagem */
   advance: number;
   notes: string | null;
+  /** diária: null = automática pelo destino, true = sempre, false = nunca */
+  perDiem: boolean | null;
 };
 
 export type TripSettingsDTO = {
@@ -93,6 +95,8 @@ export type TripSettingsDTO = {
   halfValue: number;
   minHoursHalf: number;
   halfOnReturn: boolean;
+  /** destinos (sentido) que geram diária */
+  paidDestinations: string[];
 };
 
 export type PatternDTO = {

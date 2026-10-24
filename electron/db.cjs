@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const initSqlJs = require("sql.js");
 
-const SCHEMA_VERSION = 3; // 2: mapa dos armários; 3: viagens e diárias
+const SCHEMA_VERSION = 4; // 2: mapa dos armários; 3: viagens e diárias; 4: destinos que geram diária
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -114,6 +114,8 @@ CREATE TABLE IF NOT EXISTS trips (
   status TEXT NOT NULL DEFAULT 'planejada' CHECK (status IN ('planejada', 'em_viagem', 'retornou', 'prestacao', 'paga')),
   advance REAL NOT NULL DEFAULT 0,
   notes TEXT,
+  -- diária: NULL = automática pelo destino, 1 = sempre, 0 = nunca
+  per_diem INTEGER,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CHECK (return_at >= depart_at)
 );
@@ -124,7 +126,9 @@ CREATE TABLE IF NOT EXISTS trip_settings (
   full_value REAL NOT NULL DEFAULT 120,
   half_value REAL NOT NULL DEFAULT 60,
   min_hours_half REAL NOT NULL DEFAULT 6,
-  half_on_return INTEGER NOT NULL DEFAULT 1
+  half_on_return INTEGER NOT NULL DEFAULT 1,
+  -- destinos (ou sentido) que geram diária; viagens para outros lugares não geram
+  paid_destinations TEXT NOT NULL DEFAULT '["Rondolândia","Fazenda Castanhal","Fazenda Peralta"]'
 );
 INSERT OR IGNORE INTO trip_settings (id) VALUES (1);
 `;
@@ -143,6 +147,7 @@ class EscalaDb {
     const exists = fs.existsSync(file);
     const store = new EscalaDb(SQL, file, exists ? fs.readFileSync(file) : null);
     store.db.run(SCHEMA);
+    store.migrate();
     if (!exists && seedFile && fs.existsSync(seedFile)) store.seed(JSON.parse(fs.readFileSync(seedFile, "utf8")));
     // banco novo ou de versão anterior: grava a estrutura atual (tabelas novas já foram criadas acima)
     const version = store.get("SELECT value FROM meta WHERE key = 'schema_version'");
@@ -151,6 +156,16 @@ class EscalaDb {
       store.persist();
     }
     return store;
+  }
+
+  /** Colunas novas em bancos antigos (CREATE TABLE IF NOT EXISTS não altera tabelas existentes). */
+  migrate() {
+    const addColumn = (table, column, definition) => {
+      const cols = this.all(`PRAGMA table_info(${table})`).map((c) => c.name);
+      if (!cols.includes(column)) this.db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    };
+    addColumn("trips", "per_diem", "INTEGER");
+    addColumn("trip_settings", "paid_destinations", `TEXT NOT NULL DEFAULT '["Rondolândia","Fazenda Castanhal","Fazenda Peralta"]'`);
   }
 
   /** Grava o arquivo de forma atômica (arquivo temporário + rename). */
@@ -317,7 +332,7 @@ function createOperations(store) {
             compDate: h.comp_date,
           })),
         trips: store
-          .all("SELECT id, technician_ids, destination, reason, vehicle, depart_at, return_at, returned_at, status, advance, notes FROM trips ORDER BY depart_at DESC")
+          .all("SELECT id, technician_ids, destination, reason, vehicle, depart_at, return_at, returned_at, status, advance, notes, per_diem FROM trips ORDER BY depart_at DESC")
           .map((t) => ({
             id: t.id,
             technicianIds: parse(t.technician_ids, []).map(Number),
@@ -330,10 +345,17 @@ function createOperations(store) {
             status: t.status,
             advance: Number(t.advance),
             notes: t.notes,
+            perDiem: t.per_diem == null ? null : t.per_diem === 1,
           })),
         tripSettings: (() => {
           const t = store.get("SELECT * FROM trip_settings WHERE id = 1");
-          return { fullValue: Number(t.full_value), halfValue: Number(t.half_value), minHoursHalf: Number(t.min_hours_half), halfOnReturn: t.half_on_return === 1 };
+          return {
+            fullValue: Number(t.full_value),
+            halfValue: Number(t.half_value),
+            minHoursHalf: Number(t.min_hours_half),
+            halfOnReturn: t.half_on_return === 1,
+            paidDestinations: parse(t.paid_destinations, []),
+          };
         })(),
         lockers: store
           .all("SELECT id, name, sector, since, note, technician_id FROM lockers ORDER BY id")
@@ -554,6 +576,7 @@ function createOperations(store) {
         returned_at: i.returnedAt || null,
         status: i.status,
         advance: i.advance,
+        per_diem: i.perDiem == null ? null : i.perDiem ? 1 : 0,
         notes: i.notes || null,
       });
     },
@@ -569,11 +592,12 @@ function createOperations(store) {
     },
     saveTripSettings(t) {
       return store.write(() => {
-        store.run("UPDATE trip_settings SET full_value = ?, half_value = ?, min_hours_half = ?, half_on_return = ? WHERE id = 1", [
+        store.run("UPDATE trip_settings SET full_value = ?, half_value = ?, min_hours_half = ?, half_on_return = ?, paid_destinations = ? WHERE id = 1", [
           t.fullValue,
           t.halfValue,
           t.minHoursHalf,
           t.halfOnReturn ? 1 : 0,
+          JSON.stringify(t.paidDestinations),
         ]);
         return { ok: true };
       });
