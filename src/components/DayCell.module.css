@@ -35,7 +35,7 @@
 }
 
 .plantao {
-  background: var(--sector-infra);
+  background: var(--oncall);
   color: hsl(0, 0%, 100%);
   box-shadow: inset 0 -3px 0 var(--warning);
 }

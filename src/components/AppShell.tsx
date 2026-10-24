@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, RadioTower, Siren, PartyPopper, LockKeyhole, Plane } from "lucide-react";
+import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, Siren, PartyPopper, LockKeyhole, Plane } from "lucide-react";
 import { ThemeModeSwitch } from "./ThemeModeSwitch";
 import { DatabaseMenu } from "./DatabaseMenu";
 import styles from "./AppShell.module.css";
@@ -22,7 +22,7 @@ export const AppShell = ({ children, className }: { children: ReactNode; classNa
     <div className={`${styles.shell} ${className ?? ""}`}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <RadioTower className={styles.brandIcon} />
+          <img src="./logo.png" alt="" className={styles.brandIcon} />
           <div>
             <div className={styles.brandTitle}>Escala Técnica</div>
             <div className={styles.brandSub}>Suporte · Backbone</div>

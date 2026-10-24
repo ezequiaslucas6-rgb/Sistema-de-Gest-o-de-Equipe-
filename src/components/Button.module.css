@@ -176,6 +176,7 @@
   .ghost {
     background-color: transparent;
     border-color: transparent;
+    color: inherit;
     --spinner-color: var(--primary);
   }
 

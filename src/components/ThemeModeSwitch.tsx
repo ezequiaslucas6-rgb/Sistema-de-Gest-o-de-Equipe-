@@ -71,7 +71,7 @@ export const ThemeModeSwitch = ({ className }: ThemeModeSwitchProps) => {
             onClick={() => applyThemeMode("light")}
           >
             <Sun size={16} className={styles.menuIcon} />
-            Light
+            Claro
             {mode === "light" && <span className={styles.checkmark}>✓</span>}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -79,7 +79,7 @@ export const ThemeModeSwitch = ({ className }: ThemeModeSwitchProps) => {
             onClick={() => applyThemeMode("dark")}
           >
             <Moon size={16} className={styles.menuIcon} />
-            Dark
+            Escuro
             {mode === "dark" && <span className={styles.checkmark}>✓</span>}
           </DropdownMenuItem>
           <DropdownMenuItem
