@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const initSqlJs = require("sql.js");
 
-const SCHEMA_VERSION = 2; // 2: mapa dos armários
+const SCHEMA_VERSION = 3; // 2: mapa dos armários; 3: viagens e diárias
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -100,6 +100,33 @@ CREATE TABLE IF NOT EXISTS lockers (
   technician_id INTEGER REFERENCES technicians(id) ON DELETE SET NULL,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Viagens da equipe (diárias calculadas no app a partir das datas/horas)
+CREATE TABLE IF NOT EXISTS trips (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  technician_ids TEXT NOT NULL DEFAULT '[]',
+  destination TEXT NOT NULL,
+  reason TEXT,
+  vehicle TEXT,
+  depart_at TEXT NOT NULL,
+  return_at TEXT NOT NULL,
+  returned_at TEXT,
+  status TEXT NOT NULL DEFAULT 'planejada' CHECK (status IN ('planejada', 'em_viagem', 'retornou', 'prestacao', 'paga')),
+  advance REAL NOT NULL DEFAULT 0,
+  notes TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (return_at >= depart_at)
+);
+
+-- Regras das diárias (linha única)
+CREATE TABLE IF NOT EXISTS trip_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  full_value REAL NOT NULL DEFAULT 120,
+  half_value REAL NOT NULL DEFAULT 60,
+  min_hours_half REAL NOT NULL DEFAULT 6,
+  half_on_return INTEGER NOT NULL DEFAULT 1
+);
+INSERT OR IGNORE INTO trip_settings (id) VALUES (1);
 `;
 
 class EscalaDb {
@@ -289,6 +316,25 @@ function createOperations(store) {
             onCallHours: h.on_call_hours,
             compDate: h.comp_date,
           })),
+        trips: store
+          .all("SELECT id, technician_ids, destination, reason, vehicle, depart_at, return_at, returned_at, status, advance, notes FROM trips ORDER BY depart_at DESC")
+          .map((t) => ({
+            id: t.id,
+            technicianIds: parse(t.technician_ids, []).map(Number),
+            destination: t.destination,
+            reason: t.reason,
+            vehicle: t.vehicle,
+            departAt: t.depart_at,
+            returnAt: t.return_at,
+            returnedAt: t.returned_at,
+            status: t.status,
+            advance: Number(t.advance),
+            notes: t.notes,
+          })),
+        tripSettings: (() => {
+          const t = store.get("SELECT * FROM trip_settings WHERE id = 1");
+          return { fullValue: Number(t.full_value), halfValue: Number(t.half_value), minHoursHalf: Number(t.min_hours_half), halfOnReturn: t.half_on_return === 1 };
+        })(),
         lockers: store
           .all("SELECT id, name, sector, since, note, technician_id FROM lockers ORDER BY id")
           .map((l) => ({ id: l.id, name: l.name, sector: l.sector, since: l.since, note: l.note, technicianId: l.technician_id })),
@@ -434,6 +480,42 @@ function createOperations(store) {
         return { ok: true };
       });
     },
+    saveTrip(i) {
+      return upsert("trips", i.id, {
+        technician_ids: JSON.stringify([...new Set(i.technicianIds)]),
+        destination: i.destination,
+        reason: i.reason || null,
+        vehicle: i.vehicle || null,
+        depart_at: i.departAt,
+        return_at: i.returnAt,
+        returned_at: i.returnedAt || null,
+        status: i.status,
+        advance: i.advance,
+        notes: i.notes || null,
+      });
+    },
+    setTripStatus({ id, status }) {
+      return store.write(() => {
+        store.run("UPDATE trips SET status = ? WHERE id = ?", [status, id]);
+        if (store.changes() === 0) throw new Error("Viagem não encontrada");
+        return { ok: true };
+      });
+    },
+    deleteTrip({ id }) {
+      return remove("trips", id);
+    },
+    saveTripSettings(t) {
+      return store.write(() => {
+        store.run("UPDATE trip_settings SET full_value = ?, half_value = ?, min_hours_half = ?, half_on_return = ? WHERE id = 1", [
+          t.fullValue,
+          t.halfValue,
+          t.minHoursHalf,
+          t.halfOnReturn ? 1 : 0,
+        ]);
+        return { ok: true };
+      });
+    },
+
     /** Libera a porta (apaga o ocupante). */
     freeLocker({ id }) {
       return store.write(() => {

@@ -41,5 +41,9 @@ export function useAppMutations() {
     importHolidays: useMutation(opts(api.importHolidays)),
     saveLocker: useMutation(opts(api.saveLocker, "Armário salvo")),
     freeLocker: useMutation(opts(api.freeLocker, "Armário liberado")),
+    saveTrip: useMutation(opts(api.saveTrip, "Viagem salva")),
+    setTripStatus: useMutation(opts(api.setTripStatus, "Status da viagem atualizado")),
+    deleteTrip: useMutation(opts(api.deleteTrip, "Viagem excluída")),
+    saveTripSettings: useMutation(opts(api.saveTripSettings, "Valores das diárias salvos")),
   };
 }

@@ -10,6 +10,8 @@ export interface TeamDayView {
   patternId: number | null;
   cycleDay: number | null;
   onCallId: number | null;
+  /** viagem que tirou a dupla (ou um técnico) da base neste dia */
+  tripId: number | null;
 }
 
 export interface SectorDayView {
@@ -61,6 +63,7 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           data.absences,
           data.onCallShifts,
           data.holidays,
+          data.trips,
         );
         return {
           teamId: team.id,
@@ -70,6 +73,7 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           patternId: r.pattern?.id ?? null,
           cycleDay: r.pattern ? scheduleEngine.cycleDayIndex(r.pattern, date) : null,
           onCallId: r.onCall?.id ?? null,
+          tripId: r.trip?.id ?? null,
         };
       });
       const coverage = views.filter((v) => v.status === "trabalho" || v.status === "plantao").length;
@@ -138,7 +142,29 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           message: `${labels.sectorShort[sector]}: ${coverage} dupla(s) em campo, mínimo ${min}.`,
         });
       }
+      for (const v of views.filter((x) => x.status === "viagem")) {
+        const trip = data.trips.find((t) => t.id === v.tripId);
+        alerts.push({
+          date,
+          endDate: date,
+          sector,
+          severity: "atencao",
+          message: `${teamCode.get(v.teamId)} em viagem${trip ? ` para ${trip.destination}` : ""} — fora da cobertura local.`,
+        });
+      }
       for (const v of partialViews) {
+        const trip = v.tripId ? data.trips.find((t) => t.id === v.tripId) : null;
+        if (trip) {
+          const away = v.absentMemberIds.map((m) => techName.get(m)).join(", ");
+          alerts.push({
+            date,
+            endDate: date,
+            sector,
+            severity: "atencao",
+            message: `${teamCode.get(v.teamId)} desfalcada — ${away} em viagem para ${trip.destination}.`,
+          });
+          continue;
+        }
         const absent = v.absentMemberIds.map((m) => techName.get(m)).join(", ");
         alerts.push({
           date,

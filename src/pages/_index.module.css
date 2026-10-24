@@ -383,3 +383,65 @@
   color: var(--primary);
   font-size: 0.85rem;
 }
+
+.tripsCard {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sector-infra);
+  background: var(--card);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.tripsCard:hover {
+  border-color: var(--primary);
+}
+
+.tripsIcon {
+  color: var(--sector-infra);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tripsBody {
+  flex: 1;
+  min-width: 14rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tripsNext {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.tripsStats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 0.82rem;
+  margin-left: auto;
+}
+
+.tripsStats b {
+  font-family: var(--font-family-monospace);
+}
+
+.tripsWarn {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.tripsLate {
+  color: var(--error);
+  font-weight: 600;
+}

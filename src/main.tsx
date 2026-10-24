@@ -13,6 +13,7 @@ import PlanningPage from "./pages/planejamento";
 import TeamsPage from "./pages/equipes";
 import AbsencesPage from "./pages/ausencias";
 import LockersPage from "./pages/armarios";
+import TripsPage from "./pages/viagens";
 
 const pages = [
   { path: "/", element: <DashboardPage /> },
@@ -22,6 +23,7 @@ const pages = [
   { path: "/planejamento", element: <PlanningPage /> },
   { path: "/equipes", element: <TeamsPage /> },
   { path: "/ausencias", element: <AbsencesPage /> },
+  { path: "/viagens", element: <TripsPage /> },
   { path: "/armarios", element: <LockersPage /> },
 ];
 

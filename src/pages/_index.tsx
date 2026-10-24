@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { AlertTriangle, ArrowRight, CalendarClock, Lightbulb, ShieldAlert, Siren, LockKeyhole } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock, Lightbulb, ShieldAlert, Siren, LockKeyhole, Plane } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { DayCell } from "../components/DayCell";
 import { Badge } from "../components/Badge";
@@ -106,6 +106,49 @@ export default function DashboardPage() {
                 <Link to="/plantao">Plantões</Link>
               </Button>
             </div>
+          );
+        })()}
+        {data && (() => {
+          // viagens: quem está fora hoje, próximas 7 dias, diárias do mês e pendências
+          const nowDt = `${today}T${new Date().toTimeString().slice(0, 5)}`;
+          const techName = (id: number) => data.technicians.find((t) => t.id === id)?.name ?? "removido";
+          const awayToday = data.trips.filter((t) => t.departAt.slice(0, 10) <= today && scheduleEngine.tripEnd(t).slice(0, 10) >= today);
+          const upcoming = data.trips
+            .filter((t) => t.departAt.slice(0, 10) > today && t.departAt.slice(0, 10) <= scheduleEngine.addDays(today, 7))
+            .sort((a, b) => a.departAt.localeCompare(b.departAt));
+          const monthTrips = data.trips.filter((t) => t.departAt.slice(0, 7) === today.slice(0, 7));
+          const monthValue = monthTrips.reduce((s, t) => s + scheduleEngine.tripAllowance(t, data.tripSettings).total, 0);
+          const pending = data.trips.filter((t) => t.status === "retornou" || t.status === "prestacao").length;
+          const late = data.trips.filter((t) => !t.returnedAt && t.returnAt < nowDt && t.status !== "paga" && t.departAt <= nowDt).length;
+          return (
+            <Link to="/viagens" className={styles.tripsCard}>
+              <Plane size={18} className={styles.tripsIcon} />
+              <div className={styles.tripsBody}>
+                <div className={styles.micro}>Viagens e diárias</div>
+                {awayToday.length === 0 ? (
+                  <div className={styles.tripsLine}>Ninguém viajando hoje.</div>
+                ) : (
+                  awayToday.map((t) => (
+                    <div key={t.id} className={styles.tripsLine}>
+                      <b>{t.destination}</b> — {t.technicianIds.map(techName).join(" + ")} · volta{" "}
+                      {scheduleEngine.formatDate(scheduleEngine.tripEnd(t).slice(0, 10)).slice(0, 5)} {scheduleEngine.tripEnd(t).slice(11)}
+                    </div>
+                  ))
+                )}
+                {upcoming.length > 0 && (
+                  <div className={styles.tripsNext}>
+                    Próximas: {upcoming.map((t) => `${t.destination} (${scheduleEngine.formatDate(t.departAt.slice(0, 10)).slice(0, 5)})`).join(", ")}
+                  </div>
+                )}
+              </div>
+              <div className={styles.tripsStats}>
+                <span>
+                  <b>{scheduleEngine.formatMoney(monthValue)}</b> em diárias no mês
+                </span>
+                {pending > 0 && <span className={styles.tripsWarn}>{pending} a acertar</span>}
+                {late > 0 && <span className={styles.tripsLate}>{late} retorno atrasado</span>}
+              </div>
+            </Link>
           );
         })()}
         {data && (
@@ -261,7 +304,7 @@ export default function DashboardPage() {
               </p>
             )}
           <div className={styles.legend}>
-            {(["trabalho", "plantao", "folga", "folga_plantao", "feriado", "compensatoria", "desfalcada", "ausente"] as const).map((s) => (
+            {(["trabalho", "plantao", "viagem", "folga", "folga_plantao", "feriado", "compensatoria", "desfalcada", "ausente"] as const).map((s) => (
               <span key={s} className={styles.legendItem}>
                 <DayCell status={s} tabIndex={-1} className={styles.legendCell} /> {labels.status[s]}
               </span>

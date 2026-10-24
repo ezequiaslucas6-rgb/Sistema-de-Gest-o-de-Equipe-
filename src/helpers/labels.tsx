@@ -1,4 +1,4 @@
-import type { AbsenceKind, HolidayKind, Sector } from "./schema";
+import type { AbsenceKind, HolidayKind, Sector, TripStatus } from "./schema";
 import type { DayStatus } from "./scheduleEngine";
 
 export const labels = {
@@ -23,6 +23,7 @@ export const labels = {
     folga: "Folga",
     folga_plantao: "Folga de compensação (plantão)",
     feriado: "Feriado",
+    viagem: "Em viagem",
     compensatoria: "Folga compensatória",
     desfalcada: "Desfalcada",
     ausente: "Ausente",
@@ -34,5 +35,12 @@ export const labels = {
     municipal: "Municipal",
     ponto_facultativo: "Ponto facultativo",
   } as Record<HolidayKind, string>,
+  tripStatus: {
+    planejada: "Planejada",
+    em_viagem: "Em viagem",
+    retornou: "Retornou",
+    prestacao: "Prestação de contas",
+    paga: "Paga",
+  } as Record<TripStatus, string>,
   sectors: ["suporte", "infraestrutura"] as Sector[],
 };

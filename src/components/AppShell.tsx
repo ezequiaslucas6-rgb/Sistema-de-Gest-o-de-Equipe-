@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, RadioTower, Siren, PartyPopper, LockKeyhole } from "lucide-react";
+import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, RadioTower, Siren, PartyPopper, LockKeyhole, Plane } from "lucide-react";
 import { ThemeModeSwitch } from "./ThemeModeSwitch";
 import { DatabaseMenu } from "./DatabaseMenu";
 import styles from "./AppShell.module.css";
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/escala", label: "Escala", icon: CalendarRange },
   { to: "/plantao", label: "Plantões", icon: Siren },
   { to: "/feriados", label: "Feriados", icon: PartyPopper },
+  { to: "/viagens", label: "Viagens e diárias", icon: Plane },
   { to: "/planejamento", label: "Planejamento 6x1 → 5x2", icon: Wand2 },
   { to: "/equipes", label: "Equipes e duplas", icon: Users },
   { to: "/ausencias", label: "Ausências", icon: CalendarOff },

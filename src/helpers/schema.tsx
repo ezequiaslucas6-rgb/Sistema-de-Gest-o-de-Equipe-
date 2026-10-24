@@ -8,3 +8,6 @@ export const SectorArrayValues: [Sector, ...Sector[]] = ["infraestrutura", "supo
 export const ScaleTypeArrayValues: [ScaleType, ...ScaleType[]] = ["5x2", "6x1"];
 export const AbsenceKindArrayValues: [AbsenceKind, ...AbsenceKind[]] = ["atestado", "ferias", "folga_extra", "outro", "treinamento"];
 export const HolidayKindArrayValues: [HolidayKind, ...HolidayKind[]] = ["estadual", "municipal", "nacional", "ponto_facultativo"];
+
+export type TripStatus = "planejada" | "em_viagem" | "retornou" | "prestacao" | "paga";
+export const TripStatusArrayValues: [TripStatus, ...TripStatus[]] = ["planejada", "em_viagem", "retornou", "prestacao", "paga"];

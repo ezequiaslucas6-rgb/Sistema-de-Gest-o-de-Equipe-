@@ -8,6 +8,7 @@ const SHORT: Record<DayStatus, string> = {
   folga: "F",
   folga_plantao: "FP",
   feriado: "FE",
+  viagem: "V",
   compensatoria: "FC",
   desfalcada: "D",
   ausente: "A",

@@ -84,3 +84,9 @@
   outline: 2px solid var(--foreground);
   outline-offset: 1px;
 }
+
+.viagem {
+  background: color-mix(in srgb, var(--sector-infra) 14%, var(--card));
+  border: 1px solid var(--sector-infra);
+  color: var(--sector-infra);
+}

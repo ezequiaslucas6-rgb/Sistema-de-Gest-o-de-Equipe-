@@ -1,5 +1,5 @@
 // Tipos dos dados carregados pelo app (mesmo formato da versão Floot; a leitura agora é feita em helpers/api.tsx).
-import type { AbsenceKind, HolidayKind, ScaleType, Sector } from "../helpers/schema";
+import type { AbsenceKind, HolidayKind, ScaleType, Sector, TripStatus } from "../helpers/schema";
 import type { PatternDays } from "../helpers/scheduleEngine";
 
 export type TeamDTO = {
@@ -72,6 +72,29 @@ export type LockerDTO = {
   technicianId: number | null;
 };
 
+export type TripDTO = {
+  id: number;
+  technicianIds: number[];
+  destination: string;
+  reason: string | null;
+  vehicle: string | null;
+  /** "YYYY-MM-DDTHH:MM" */
+  departAt: string;
+  returnAt: string;
+  returnedAt: string | null;
+  status: TripStatus;
+  /** adiantamento total da viagem */
+  advance: number;
+  notes: string | null;
+};
+
+export type TripSettingsDTO = {
+  fullValue: number;
+  halfValue: number;
+  minHoursHalf: number;
+  halfOnReturn: boolean;
+};
+
 export type PatternDTO = {
   id: number;
   sector: Sector;
@@ -91,4 +114,6 @@ export type OutputType = {
   onCallShifts: OnCallShiftDTO[];
   holidays: HolidayDTO[];
   lockers: LockerDTO[];
+  trips: TripDTO[];
+  tripSettings: TripSettingsDTO;
 };

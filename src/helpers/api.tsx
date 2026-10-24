@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { dbCall } from "./desktop";
 import { scheduleEngine } from "./scheduleEngine";
-import { AbsenceKindArrayValues, HolidayKindArrayValues, ScaleTypeArrayValues, SectorArrayValues } from "./schema";
+import { AbsenceKindArrayValues, HolidayKindArrayValues, ScaleTypeArrayValues, SectorArrayValues, TripStatusArrayValues } from "./schema";
 import type { OutputType } from "../endpoints/data_GET.schema";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida");
@@ -167,3 +167,36 @@ export const lockerSchema = z.object({
 });
 export const saveLocker = (body: z.infer<typeof lockerSchema>) => dbCall<Ok>("saveLocker", lockerSchema.parse(body));
 export const freeLocker = (body: { id: string }) => dbCall<Ok>("freeLocker", { id: lockerSchema.shape.id.parse(body.id) });
+
+// ---------- viagens e diárias ----------
+
+const dateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Data e hora inválidas");
+
+export const tripSchema = z
+  .object({
+    id: z.number().int().optional(),
+    technicianIds: z.array(z.number().int()).min(1, "Escolha pelo menos um técnico"),
+    destination: z.string().trim().min(1, "Informe o destino").max(120),
+    reason: z.string().trim().max(200).nullable(),
+    vehicle: z.string().trim().max(60).nullable(),
+    departAt: dateTime,
+    returnAt: dateTime,
+    returnedAt: dateTime.nullable(),
+    status: z.enum(TripStatusArrayValues),
+    advance: z.number().min(0).max(1_000_000),
+    notes: z.string().trim().max(500).nullable(),
+  })
+  .refine((v) => v.returnAt >= v.departAt, { message: "O retorno previsto deve ser depois da saída", path: ["returnAt"] })
+  .refine((v) => !v.returnedAt || v.returnedAt >= v.departAt, { message: "O retorno real deve ser depois da saída", path: ["returnedAt"] });
+export const saveTrip = (body: z.infer<typeof tripSchema>) => dbCall<Saved>("saveTrip", tripSchema.parse(body));
+export const setTripStatus = (body: { id: number; status: z.infer<typeof tripSchema>["status"] }) =>
+  dbCall<Ok>("setTripStatus", z.object({ id: z.number().int(), status: z.enum(TripStatusArrayValues) }).parse(body));
+export const deleteTrip = (body: z.infer<typeof idSchema>) => dbCall<Ok>("deleteTrip", idSchema.parse(body));
+
+export const tripSettingsSchema = z.object({
+  fullValue: z.number().min(0).max(100_000),
+  halfValue: z.number().min(0).max(100_000),
+  minHoursHalf: z.number().min(0).max(24),
+  halfOnReturn: z.boolean(),
+});
+export const saveTripSettings = (body: z.infer<typeof tripSettingsSchema>) => dbCall<Ok>("saveTripSettings", tripSettingsSchema.parse(body));

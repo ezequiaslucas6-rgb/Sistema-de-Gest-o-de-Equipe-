@@ -224,7 +224,7 @@ export default function SchedulePage() {
       </div>
 
       <div className={styles.legend}>
-        {(["trabalho", "plantao", "folga", "folga_plantao", "feriado", "compensatoria", "desfalcada", "ausente", "sem_escala"] as const).map((s) => (
+        {(["trabalho", "plantao", "viagem", "folga", "folga_plantao", "feriado", "compensatoria", "desfalcada", "ausente", "sem_escala"] as const).map((s) => (
           <span key={s} className={styles.legendItem}>
             <DayCell status={s} tabIndex={-1} className={styles.legendCell} /> {labels.status[s]}
           </span>
@@ -274,6 +274,20 @@ export default function SchedulePage() {
                     </span>
                   </div>
                 )}
+                {selected.view.tripId !== null && (() => {
+                  const trip = data!.trips.find((t) => t.id === selected.view.tripId);
+                  if (!trip) return null;
+                  return (
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>Viagem</span>
+                      <span>
+                        {trip.destination}
+                        {trip.reason ? ` — ${trip.reason}` : ""} · volta {scheduleEngine.formatDate(scheduleEngine.tripEnd(trip).slice(0, 10))}{" "}
+                        {scheduleEngine.tripEnd(trip).slice(11)}. Ajuste em Viagens e diárias.
+                      </span>
+                    </div>
+                  );
+                })()}
                 {selected.view.onCallId !== null && (() => {
                   const shift = data!.onCallShifts.find((s) => s.id === selected.view.onCallId);
                   if (!shift) return null;

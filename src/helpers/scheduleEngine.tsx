@@ -20,6 +20,7 @@ export type DayStatus =
   | "compensatoria"
   | "desfalcada"
   | "ausente"
+  | "viagem"
   | "sem_escala";
 
 export interface PatternLike {
@@ -67,6 +68,41 @@ export interface HolidayLike {
   compDate: string | null;
 }
 
+export interface TripLike {
+  id: number;
+  technicianIds: number[];
+  /** "YYYY-MM-DDTHH:MM" */
+  departAt: string;
+  /** retorno previsto */
+  returnAt: string;
+  /** retorno real, quando já voltou */
+  returnedAt: string | null;
+}
+
+export interface TripSettingsLike {
+  /** valor da diária cheia (por pernoite) */
+  fullValue: number;
+  /** valor da meia diária */
+  halfValue: number;
+  /** horas mínimas fora para ganhar meia diária quando volta no mesmo dia */
+  minHoursHalf: number;
+  /** o dia do retorno, após pernoite, conta como meia diária */
+  halfOnReturn: boolean;
+}
+
+export interface TripAllowance {
+  /** pernoites */
+  nights: number;
+  /** horas fora */
+  hours: number;
+  full: number;
+  half: number;
+  /** valor por técnico */
+  perTechnician: number;
+  /** valor total da viagem (todos os técnicos) */
+  total: number;
+}
+
 export interface GenerateInput {
   teamIds: number[];
   scaleType: ScaleType;
@@ -108,6 +144,7 @@ export interface ResolvedDay {
   availableMemberIds: number[];
   onCall: OnCallLike | null;
   holiday: HolidayLike | null;
+  trip: TripLike | null;
 }
 
 const DAY_MS = 86400000;
@@ -472,12 +509,24 @@ function resolveTeamDay(
   absences: AbsenceLike[],
   onCall: OnCallLike[] = [],
   holidays: HolidayLike[] = [],
+  trips: TripLike[] = [],
 ): ResolvedDay {
   const pattern = patternForDate(patterns, team.sector, date);
   const absentMemberIds = team.memberIds.filter((m) => isAbsent(absences, m, date));
   const availableMemberIds = team.memberIds.filter((m) => !absentMemberIds.includes(m));
   const holiday = holidays.find((h) => h.date === date) ?? null;
-  const base = { pattern, absentMemberIds, availableMemberIds, holiday };
+  const base = { pattern, absentMemberIds, availableMemberIds, holiday, trip: null as TripLike | null };
+  // viagem: a dupla inteira fora da base sai da cobertura local; só um técnico viajando deixa a dupla desfalcada
+  const traveling = team.memberIds.filter((m) => tripForTechnician(trips, m, date));
+  if (traveling.length > 0) {
+    const trip = tripForTechnician(trips, traveling[0], date);
+    const away = new Set([...absentMemberIds, ...traveling]);
+    const remaining = team.memberIds.filter((m) => !away.has(m));
+    if (remaining.length === 0) {
+      return { ...base, trip, status: "viagem", absentMemberIds: [...away], availableMemberIds: [], onCall: null };
+    }
+    return { ...base, trip, status: "desfalcada", absentMemberIds: [...away], availableMemberIds: remaining, onCall: null };
+  }
   // plantão de fim de semana tem prioridade sobre a escala base
   const shift = onCall.find(
     (s) => s.teamId === team.id && (s.weekendStart === date || addDays(s.weekendStart, 1) === date),
@@ -740,6 +789,63 @@ function brazilNationalHolidays(year: number): NationalHoliday[] {
   return list.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** Data (YYYY-MM-DD) do retorno efetivo: real se já voltou, senão o previsto. */
+function tripEnd(trip: TripLike): string {
+  return trip.returnedAt ?? trip.returnAt;
+}
+
+/** Viagem em que o técnico está fora da base na data (do dia da saída ao dia do retorno). */
+function tripForTechnician<T extends TripLike>(trips: T[], technicianId: number, date: string): T | null {
+  for (const t of trips) {
+    if (!t.technicianIds.includes(technicianId)) continue;
+    if (t.departAt.slice(0, 10) <= date && tripEnd(t).slice(0, 10) >= date) return t;
+  }
+  return null;
+}
+
+function minutesOf(dt: string): number {
+  const [d, time = "00:00"] = dt.split("T");
+  const [h, m] = time.split(":").map(Number);
+  return (toUtc(d) / 60000) + h * 60 + m;
+}
+
+/**
+ * Diárias de uma viagem, por técnico:
+ * - cada pernoite = 1 diária cheia;
+ * - com pernoite, o dia do retorno vale meia diária (se configurado);
+ * - sem pernoite, meia diária quando ficou fora pelo menos as horas mínimas.
+ */
+function tripAllowance(trip: TripLike, settings: TripSettingsLike): TripAllowance {
+  const end = tripEnd(trip);
+  const hours = Math.max(0, (minutesOf(end) - minutesOf(trip.departAt)) / 60);
+  const nights = Math.max(0, diffDays(end.slice(0, 10), trip.departAt.slice(0, 10)));
+  let full = 0;
+  let half = 0;
+  if (nights > 0) {
+    full = nights;
+    if (settings.halfOnReturn) half = 1;
+  } else if (hours >= settings.minHoursHalf) {
+    half = 1;
+  }
+  const perTechnician = round2(full * settings.fullValue + half * settings.halfValue);
+  return {
+    nights,
+    hours: round1(hours),
+    full,
+    half,
+    perTechnician,
+    total: round2(perTechnician * trip.technicianIds.length),
+  };
+}
+
+function round2(v: number): number {
+  return Math.round(v * 100) / 100;
+}
+
+function formatMoney(v: number): string {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 /** Alterna folga de uma equipe num dia do ciclo (edição manual da escala). */
 function toggleOff(daysOff: PatternDays, teamId: number, day: number): PatternDays {
   const key = String(teamId);
@@ -775,5 +881,9 @@ export const scheduleEngine = {
   mondayOf,
   todayIso,
   formatDate,
+  tripForTechnician,
+  tripAllowance,
+  tripEnd,
+  formatMoney,
 };
 
