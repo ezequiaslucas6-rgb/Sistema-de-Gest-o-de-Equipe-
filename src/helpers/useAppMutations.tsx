@@ -34,6 +34,7 @@ export function useAppMutations() {
     savePattern: useMutation(opts(api.savePattern, "Escala salva")),
     deletePattern: useMutation(opts(api.deletePattern, "Escala excluída")),
     bulkOnCall: useMutation(opts(api.bulkOnCall, "Rodízio de plantão salvo")),
+    applyOnCallPlan: useMutation(opts(api.applyOnCallPlan, "Escala de plantão aplicada")),
     saveOnCall: useMutation(opts(api.saveOnCall, "Plantão salvo")),
     deleteOnCall: useMutation(opts(api.deleteOnCall, "Plantão removido")),
     saveHoliday: useMutation(opts(api.saveHoliday, "Feriado salvo")),

@@ -15,11 +15,13 @@ import AbsencesPage from "./pages/ausencias";
 import LockersPage from "./pages/armarios";
 import TripsPage from "./pages/viagens";
 import TvPage from "./pages/tv";
+import MotorPage from "./pages/motor";
 
 const pages = [
   { path: "/", element: <DashboardPage /> },
   { path: "/escala", element: <SchedulePage /> },
   { path: "/plantao", element: <OnCallPage /> },
+  { path: "/motor", element: <MotorPage /> },
   { path: "/feriados", element: <HolidaysPage /> },
   { path: "/planejamento", element: <PlanningPage /> },
   { path: "/equipes", element: <TeamsPage /> },

@@ -425,6 +425,49 @@ function createOperations(store) {
         return { created: i.shifts.length };
       });
     },
+    /** Motor de plantão: grava o rodízio dos dois setores, os plantões de feriado e a escala base 6x1 numa transação. */
+    applyOnCallPlan(i) {
+      return store.write(() => {
+        let created = 0;
+        for (const sec of i.sectors) {
+          const teamIds = store.all("SELECT id FROM teams WHERE sector = ?", [sec.sector]).map((t) => t.id);
+          if (sec.shifts.some((s) => !teamIds.includes(s.teamId))) throw new Error("Equipe não pertence ao setor");
+          if (teamIds.length > 0) {
+            store.run(
+              `DELETE FROM on_call_shifts WHERE team_id IN (${teamIds.map(() => "?").join(",")}) AND weekend_start BETWEEN ? AND ?`,
+              [...teamIds, i.fromDate, i.toDate],
+            );
+          }
+          for (const s of sec.shifts) {
+            store.run("INSERT INTO on_call_shifts (team_id, weekend_start, comp_dates, notes) VALUES (?,?,?,?)", [
+              s.teamId,
+              s.weekendStart,
+              JSON.stringify([...new Set(s.compDates)].sort()),
+              s.notes || null,
+            ]);
+            created++;
+          }
+        }
+        for (const h of i.holidays) {
+          store.run("UPDATE holidays SET on_call_team_ids = ?, comp_date = ? WHERE id = ?", [JSON.stringify([...new Set(h.onCallTeamIds)]), h.compDate, h.id]);
+        }
+        for (const b of i.basePatterns) {
+          const exists = store.get("SELECT id FROM schedule_patterns WHERE sector = ? AND start_date = ?", [b.sector, b.startDate]);
+          if (exists) continue;
+          const teamIds = store.all("SELECT id FROM teams WHERE sector = ?", [b.sector]).map((t) => t.id);
+          const daysOff = Object.fromEntries(teamIds.map((id) => [String(id), [{ day: 6, kind: "regular" }]]));
+          store.run("INSERT INTO schedule_patterns (sector, scale_type, name, start_date, cycle_weeks, days_off) VALUES (?,?,?,?,?,?)", [
+            b.sector,
+            "6x1",
+            "Escala 6x1 (seg–sáb, domingo folga) — motor de plantão",
+            b.startDate,
+            1,
+            JSON.stringify(daysOff),
+          ]);
+        }
+        return { created };
+      });
+    },
     saveOnCall(i) {
       return upsert(
         "on_call_shifts",

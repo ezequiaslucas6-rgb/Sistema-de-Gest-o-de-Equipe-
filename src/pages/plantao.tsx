@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
-import { AlertTriangle, CalendarClock, Pencil, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, CalendarClock, Cpu, Pencil, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
@@ -176,9 +177,16 @@ export default function OnCallPage() {
         title="Plantões e compensação"
         description="Rodízio de plantão de fim de semana por setor, folga de compensação no fim de semana seguinte e banco de horas de cada dupla."
         actions={
-          <Button onClick={() => openEdit()}>
-            <Plus size={16} /> Lançar plantão
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link to="/motor">
+                <Cpu size={16} /> Motor de plantão
+              </Link>
+            </Button>
+            <Button onClick={() => openEdit()}>
+              <Plus size={16} /> Lançar plantão
+            </Button>
+          </>
         }
       />
 

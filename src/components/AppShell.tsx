@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, Siren, PartyPopper, LockKeyhole, Plane } from "lucide-react";
+import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, Siren, PartyPopper, LockKeyhole, Plane, Cpu } from "lucide-react";
 import { ThemeModeSwitch } from "./ThemeModeSwitch";
 import { DatabaseMenu } from "./DatabaseMenu";
 import styles from "./AppShell.module.css";
@@ -9,6 +9,7 @@ const NAV = [
   { to: "/", label: "Painel", icon: LayoutDashboard, end: true },
   { to: "/escala", label: "Escala", icon: CalendarRange },
   { to: "/plantao", label: "Plantões", icon: Siren },
+  { to: "/motor", label: "Motor de plantão", icon: Cpu },
   { to: "/feriados", label: "Feriados", icon: PartyPopper },
   { to: "/viagens", label: "Viagens e diárias", icon: Plane },
   { to: "/planejamento", label: "Planejamento 6x1 → 5x2", icon: Wand2 },

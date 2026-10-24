@@ -120,6 +120,21 @@ export const onCallBulkSchema = z.object({
 /** Substitui os plantões do setor no intervalo (uma única transação no banco). */
 export const bulkOnCall = (body: z.infer<typeof onCallBulkSchema>) => dbCall<{ created: number }>("bulkOnCall", onCallBulkSchema.parse(body));
 
+export const onCallPlanSchema = z.object({
+  fromDate: isoDate,
+  toDate: isoDate,
+  sectors: z.array(
+    z.object({
+      sector: z.enum(SectorArrayValues),
+      shifts: z.array(z.object({ teamId: z.number().int(), weekendStart: isoDate, compDates: z.array(isoDate).max(5), notes: z.string().nullable() })),
+    }),
+  ),
+  holidays: z.array(z.object({ id: z.number().int(), onCallTeamIds: z.array(z.number().int()), compDate: isoDate.nullable() })),
+  basePatterns: z.array(z.object({ sector: z.enum(SectorArrayValues), startDate: isoDate })),
+});
+/** Motor de plantão: grava rodízio + feriados + escala base numa única transação. */
+export const applyOnCallPlan = (body: z.infer<typeof onCallPlanSchema>) => dbCall<{ created: number }>("applyOnCallPlan", onCallPlanSchema.parse(body));
+
 export const onCallSchema = z
   .object({
     id: z.number().int().optional(),
