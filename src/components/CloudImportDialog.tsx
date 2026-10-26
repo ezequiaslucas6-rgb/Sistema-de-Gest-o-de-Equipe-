@@ -36,10 +36,10 @@ export const CloudImportDialog = () => {
   const [cloud, setCloud] = useState<OutputType | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const load = async (auto: boolean) => {
-    if (!window.escala) return;
+  const load = async (auto: boolean, fromFile?: OutputType) => {
+    if (!fromFile && !window.escala) return;
     try {
-      const l = await localCall<OutputType>("getData");
+      const l = fromFile ?? (await localCall<OutputType>("getData"));
       if (auto && !hasRealData(l)) return;
       setLocal(l);
       setCloud(await cloudGetData());
@@ -57,7 +57,8 @@ export const CloudImportDialog = () => {
       // sem armazenamento: só abre pelo menu
     }
     if (!flag) void load(true);
-    const onOpen = () => void load(false);
+    // o evento pode trazer os dados de um arquivo escolhido no menu (site ou programa)
+    const onOpen = (e: Event) => void load(false, (e as CustomEvent<OutputType | undefined>).detail);
     window.addEventListener(OPEN_IMPORT_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_IMPORT_EVENT, onOpen);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,17 +97,17 @@ export const CloudImportDialog = () => {
     >
       <DialogContent className={styles.dialog}>
         <DialogHeader>
-          <DialogTitle>Levar os dados deste computador para a nuvem?</DialogTitle>
+          <DialogTitle>Levar os dados do banco antigo para a nuvem?</DialogTitle>
           <DialogDescription>
-            O sistema agora guarda tudo no Supabase, e qualquer computador com login liberado vê os mesmos dados. Este computador tem dados da versão
-            anterior (banco local). Enviar <b>substitui</b> o que está hoje na nuvem.
+            O sistema agora guarda tudo no Supabase, e qualquer computador com login liberado vê os mesmos dados. Estes são os dados do banco da versão
+            anterior (arquivo no computador). Enviar <b>substitui</b> o que está hoje na nuvem.
           </DialogDescription>
         </DialogHeader>
         {local && cloud && (
           <div className={styles.compare}>
             <div className={styles.col}>
               <div className={styles.head}>
-                <HardDrive size={16} /> Neste computador
+                <HardDrive size={16} /> No banco antigo
               </div>
               {summary(local).map(([k, v]) => (
                 <div key={k} className={styles.row}>

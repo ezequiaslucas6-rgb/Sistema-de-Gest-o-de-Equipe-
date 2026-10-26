@@ -30,8 +30,8 @@ O mesmo sistema também abre no navegador, sem instalar:
 
 - Tabelas `escala_*` no projeto Supabase (duplas, técnicos, ausências, regras, escalas, plantões, feriados, armários,
   viagens, regras das diárias e configuração do motor).
-- Ícone de **nuvem** (canto inferior esquerdo): usuário logado, **Baixar backup (.json)**, **Enviar dados deste
-  computador…** e **Sair**.
+- Ícone de **nuvem** (canto inferior esquerdo): usuário logado, **Baixar backup (.json)**, **Enviar dados do banco
+  antigo (arquivo)…** (escolha o `escala-tecnica.sqlite`; funciona no site e no programa) e **Sair**.
 - **Versões anteriores guardavam tudo num arquivo local** (`Documentos\Escala Técnica\escala-tecnica.sqlite`). No primeiro
   login num computador que tem esse arquivo com dados próprios, o programa oferece **enviar esses dados para a nuvem**
   (substitui o que está lá). O arquivo local não é apagado.

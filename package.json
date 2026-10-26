@@ -2,7 +2,7 @@
   "name": "escala-tecnica",
   "productName": "Escala Técnica",
   "private": true,
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Escala Técnica — gestão das duplas de Suporte Técnico e Infraestrutura Backbone (6x1/5x2, plantões, feriados, banco de horas)",
   "author": "Ezequias",
   "main": "electron/main.cjs",

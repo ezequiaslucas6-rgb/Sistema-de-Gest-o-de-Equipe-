@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Cloud, CloudUpload, Download, LogOut } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Cloud, CloudUpload, Download, FileUp, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,21 @@ import styles from "./DatabaseMenu.module.css";
 /** Menu dos dados: nuvem (Supabase), usuário logado, backup em arquivo e envio dos dados do banco local antigo. */
 export const DatabaseMenu = ({ className }: { className?: string }) => {
   const [email, setEmail] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const pickFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      // carrega o leitor de SQLite só quando precisa
+      const { readLocalDbFile } = await import("../helpers/localFile");
+      const data = await readLocalDbFile(file);
+      window.dispatchEvent(new CustomEvent(OPEN_IMPORT_EVENT, { detail: data }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -39,6 +54,14 @@ export const DatabaseMenu = ({ className }: { className?: string }) => {
   };
 
   return (
+    <>
+    <input
+      ref={fileRef}
+      type="file"
+      accept=".sqlite,.db,.sqlite3"
+      hidden
+      onChange={(e) => void pickFile(e.target.files?.[0])}
+    />
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon-md" className={className} aria-label="Dados na nuvem" title="Dados na nuvem">
@@ -54,6 +77,9 @@ export const DatabaseMenu = ({ className }: { className?: string }) => {
         <DropdownMenuItem onClick={backup}>
           <Download size={15} /> Baixar backup (.json)
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => fileRef.current?.click()}>
+          <FileUp size={15} /> Enviar dados do banco antigo (arquivo)…
+        </DropdownMenuItem>
         {window.escala && (
           <DropdownMenuItem onClick={() => window.dispatchEvent(new Event(OPEN_IMPORT_EVENT))}>
             <CloudUpload size={15} /> Enviar dados deste computador…
@@ -65,5 +91,6 @@ export const DatabaseMenu = ({ className }: { className?: string }) => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 };
