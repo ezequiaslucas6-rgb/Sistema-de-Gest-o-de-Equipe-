@@ -1110,7 +1110,7 @@ button.kpi:hover {
   display: grid;
   grid-template-columns: 8rem 1fr auto;
   gap: var(--spacing-3);
-  align-items: center;
+  align-items: start;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
@@ -1162,4 +1162,29 @@ button.kpi:hover {
   .hint {
     display: none;
   }
+}
+
+.alertBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.alertIgnored {
+  opacity: 0.55;
+}
+
+.showIgnored {
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0 0 var(--spacing-2);
+  text-decoration: underline;
+}
+
+.alertList {
+  max-height: 30rem !important;
 }

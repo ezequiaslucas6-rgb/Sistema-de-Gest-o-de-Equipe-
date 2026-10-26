@@ -161,6 +161,10 @@ export const saveOverride = (body: z.infer<typeof overrideSchema>) => dbCall<Ok>
 export const deleteOverride = (body: { teamId: number; date: string }) =>
   dbCall<Ok>("deleteOverride", z.object({ teamId: z.number().int(), date: isoDate }).parse(body));
 
+/** Alertas do painel marcados como "Ignorar" (lista completa de chaves). */
+export const saveIgnoredAlerts = (body: { keys: string[] }) =>
+  dbCall<Ok>("saveIgnoredAlerts", z.object({ keys: z.array(z.string().max(400)).max(2000) }).parse(body));
+
 export const onCallSchema = z
   .object({
     id: z.number().int().optional(),

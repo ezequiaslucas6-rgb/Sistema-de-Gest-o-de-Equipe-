@@ -74,7 +74,7 @@ export async function cloudGetData(): Promise<OutputType> {
     rows(supabase.from(TABLES.lockers).select("id, name, sector, since, note, technician_id").order("id")),
     rows(supabase.from(TABLES.trips).select("*").order("depart_at", { ascending: false })),
     rows(supabase.from(TABLES.tripSettings).select("*").eq("id", 1)),
-    rows(supabase.from(TABLES.meta).select("key, value").eq("key", "motor_config")),
+    rows(supabase.from(TABLES.meta).select("key, value").in("key", ["motor_config", "alertas_ignorados"])),
     rows(supabase.from(TABLES.overrides).select("id, team_id, date, status, note").order("date")),
   ]);
   const ts = tripSettings[0] ?? { full_value: 120, half_value: 60, min_hours_half: 6, half_on_return: true, paid_destinations: [] };
@@ -129,7 +129,8 @@ export async function cloudGetData(): Promise<OutputType> {
       halfOnReturn: !!ts.half_on_return,
       paidDestinations: ts.paid_destinations ?? [],
     },
-    motorConfig: (meta[0]?.value as OutputType["motorConfig"]) ?? null,
+    motorConfig: (meta.find((m) => m.key === "motor_config")?.value as OutputType["motorConfig"]) ?? null,
+    ignoredAlerts: (meta.find((m) => m.key === "alertas_ignorados")?.value as string[]) ?? [],
     overrides: overrides.map((o) => ({ id: num(o.id), teamId: num(o.team_id), date: o.date, status: o.status, note: o.note })),
   };
 }
@@ -254,6 +255,10 @@ export const cloudOps: Record<string, Op> = {
     for (const u of i.shifts) fail((await supabase.from(TABLES.shifts).update({ team_id: u.teamId, notes: u.notes || null }).eq("id", u.id)).error);
     for (const h of i.holidays) fail((await supabase.from(TABLES.holidays).update({ on_call_team_ids: [...new Set(h.onCallTeamIds)] }).eq("id", h.id)).error);
     return { changed: i.shifts.length + i.holidays.length };
+  },
+  saveIgnoredAlerts: async ({ keys }) => {
+    fail((await supabase.from(TABLES.meta).upsert({ key: "alertas_ignorados", value: keys }, { onConflict: "key" })).error);
+    return { ok: true };
   },
   saveMotorConfig: async (i) => {
     fail((await supabase.from(TABLES.meta).upsert({ key: "motor_config", value: i }, { onConflict: "key" })).error);

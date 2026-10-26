@@ -139,4 +139,6 @@ export type OutputType = {
   /** preferências salvas do motor de plantão (null até a primeira gravação) */
   motorConfig: MotorConfigDTO | null;
   overrides: DayOverrideDTO[];
+  /** alertas marcados como "Ignorar" no painel (chave sector|data|mensagem) */
+  ignoredAlerts: string[];
 };

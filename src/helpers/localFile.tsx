@@ -108,6 +108,7 @@ export async function readLocalDbFile(file: File): Promise<OutputType> {
     lockers: rows("lockers", " ORDER BY id").map((l) => ({ id: l.id, name: l.name, sector: l.sector, since: l.since, note: l.note, technicianId: l.technician_id ?? null })),
     motorConfig: parse(meta.find((m) => m.key === "motor_config")?.value, null),
     overrides: [],
+    ignoredAlerts: [],
   };
   db.close();
   return data;

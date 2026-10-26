@@ -30,6 +30,17 @@ export interface SectorDayView {
   holiday: { name: string; dayOff: boolean } | null;
 }
 
+/** Ajuste que resolve o alerta com um clique. */
+export type AlertFix =
+  /** colocar a dupla em campo nesses dias (ajuste do dia na escala) */
+  | { kind: "callTeam"; teamId: number; dates: string[] }
+  /** escalar a dupla no plantão do feriado */
+  | { kind: "holidayOnCall"; holidayId: number; teamId: number }
+  /** trocar a dupla do plantão de fim de semana */
+  | { kind: "swapOnCall"; shiftId: number; teamId: number }
+  /** abrir a tela onde o ajuste é feito */
+  | { kind: "link"; to: string; label: string };
+
 export interface Alert {
   date: string;
   /** último dia quando o mesmo alerta se repete em dias seguidos */
@@ -37,7 +48,11 @@ export interface Alert {
   sector: Sector;
   severity: "critico" | "atencao";
   message: string;
+  fixes: AlertFix[];
 }
+
+/** Identificador estável do alerta (para "Ignorar"). */
+export const alertKey = (a: Pick<Alert, "sector" | "message" | "date">) => `${a.sector}|${a.date}|${a.message}`;
 
 /** Monta a visão diária (status de cada equipe, cobertura e sugestões) para um intervalo de datas. */
 export function buildScheduleSnapshot(data: OutputType, startDate: string, days: number) {
@@ -95,6 +110,9 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           sector,
           severity: "atencao",
           message: `${holiday.name}: ${labels.sectorShort[sector]} sem dupla de plantão no feriado.`,
+          fixes: views
+            .filter((v) => v.absentMemberIds.length === 0 && v.availableMemberIds.length > 0)
+            .map((v) => ({ kind: "holidayOnCall" as const, holidayId: holiday.id, teamId: v.teamId })),
         });
         suggestions.push(`Feriado ${holiday.name}: escalar plantão do ${labels.sectorShort[sector]} em Feriados.`);
       }
@@ -112,6 +130,10 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
             sector,
             severity: "critico",
             message: `Plantão de ${teamCode.get(v.teamId)} comprometido — ${v.absentMemberIds.map((m) => techName.get(m)).join(", ")} ausente.`,
+            fixes: [
+              ...substitutes.map((o) => ({ kind: "swapOnCall" as const, shiftId: v.onCallId!, teamId: o.teamId })),
+              { kind: "link" as const, to: "/motor", label: "Escala de plantão" },
+            ],
           });
           if (substitutes.length > 0) {
             suggestions.push(
@@ -144,6 +166,16 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           sector,
           severity: "critico",
           message: `${labels.sectorShort[sector]}: ${coverage} dupla(s) em campo, mínimo ${min}.`,
+          fixes: [
+            // feriado: quem resolve é a dupla de plantão do feriado; dia comum: chamar quem está de folga
+            ...(holiday?.dayOff
+              ? views
+                  .filter((v) => v.absentMemberIds.length === 0 && v.availableMemberIds.length > 0 && !holiday.onCallTeamIds.includes(v.teamId))
+                  .map((v) => ({ kind: "holidayOnCall" as const, holidayId: holiday.id, teamId: v.teamId }))
+              : offTeams.map((v) => ({ kind: "callTeam" as const, teamId: v.teamId, dates: [date] }))),
+            { kind: "link" as const, to: "/escala", label: "Ajustar na escala" },
+            { kind: "link" as const, to: "/planejamento", label: "Mudar o mínimo" },
+          ],
         });
       }
       for (const v of views.filter((x) => x.status === "viagem")) {
@@ -154,6 +186,7 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           sector,
           severity: "atencao",
           message: `${teamCode.get(v.teamId)} em viagem${trip ? ` para ${trip.destination}` : ""} — fora da cobertura local.`,
+          fixes: [{ kind: "link", to: "/viagens", label: "Ver viagem" }],
         });
       }
       for (const v of partialViews) {
@@ -166,6 +199,7 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
             sector,
             severity: "atencao",
             message: `${teamCode.get(v.teamId)} desfalcada — ${away} em viagem para ${trip.destination}.`,
+            fixes: [{ kind: "link", to: "/viagens", label: "Ver viagem" }],
           });
           continue;
         }
@@ -178,6 +212,12 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           message: absent
             ? `${teamCode.get(v.teamId)} desfalcada — ${absent} ausente.`
             : `${teamCode.get(v.teamId)} sem dupla completa cadastrada.`,
+          fixes: absent
+            ? [
+                { kind: "link", to: "/escala", label: "Ajustar na escala" },
+                { kind: "link", to: "/ausencias", label: "Ver ausências" },
+              ]
+            : [{ kind: "link", to: "/equipes", label: "Completar a dupla" }],
         });
       }
       result[sector].push({
@@ -201,8 +241,14 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
     const prev = open.get(key);
     if (prev && scheduleEngine.addDays(prev.endDate, 1) === a.date) {
       prev.endDate = a.date;
+      // "colocar em campo" vale para todos os dias do intervalo em que a dupla estava de folga
+      for (const f of a.fixes) {
+        if (f.kind !== "callTeam") continue;
+        const same = prev.fixes.find((p) => p.kind === "callTeam" && p.teamId === f.teamId);
+        if (same && same.kind === "callTeam") same.dates.push(...f.dates);
+      }
     } else {
-      const item = { ...a };
+      const item = { ...a, fixes: a.fixes.map((f) => (f.kind === "callTeam" ? { ...f, dates: [...f.dates] } : f)) };
       grouped.push(item);
       open.set(key, item);
     }

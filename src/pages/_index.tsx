@@ -10,10 +10,12 @@ import { Button } from "../components/Button";
 import { Skeleton } from "../components/Skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../components/Tooltip";
 import { TeamDetailDialog } from "../components/TeamDetailDialog";
+import { AlertActions } from "../components/AlertActions";
+import { useAppMutations } from "../helpers/useAppMutations";
 import { useAppData } from "../helpers/useAppData";
 import { useCountUp, useNow } from "../helpers/useLive";
 import { scheduleEngine, Sector } from "../helpers/scheduleEngine";
-import { buildScheduleSnapshot } from "../helpers/buildScheduleSnapshot";
+import { alertKey, buildScheduleSnapshot, type Alert } from "../helpers/buildScheduleSnapshot";
 import { buildEvents, DashEvent, EventKind, liveStatus, longDate, relativeDay, weekendOf } from "../helpers/dashboardData";
 import { labels } from "../helpers/labels";
 import { LOCKER_COUNT } from "../helpers/api";
@@ -108,10 +110,21 @@ export default function DashboardPage() {
     };
   }, [data, snapshot, idx, selected, filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const alerts = useMemo(
+  const { saveIgnoredAlerts } = useAppMutations();
+  const [showIgnored, setShowIgnored] = useState(false);
+  const ignoredKeys = useMemo(() => new Set(data?.ignoredAlerts ?? []), [data]);
+  const allAlerts = useMemo(
     () => (snapshot ? snapshot.alerts.filter((a) => a.endDate >= today && sectors.includes(a.sector)) : []),
     [snapshot, today, filter], // eslint-disable-line react-hooks/exhaustive-deps
   );
+  const alerts = useMemo(() => allAlerts.filter((a) => showIgnored || !ignoredKeys.has(alertKey(a))), [allAlerts, ignoredKeys, showIgnored]);
+  const ignoredCount = allAlerts.filter((a) => ignoredKeys.has(alertKey(a))).length;
+  const toggleIgnore = (a: Alert) => {
+    const k = alertKey(a);
+    const keys = ignoredKeys.has(k) ? [...ignoredKeys].filter((x) => x !== k) : [...ignoredKeys, k];
+    // limpa chaves de alertas que já passaram
+    saveIgnoredAlerts.mutate({ keys: keys.filter((x) => (x.split("|")[1] ?? "") >= scheduleEngine.addDays(today, -40)) });
+  };
   const suggestions = useMemo(() => {
     if (!snapshot) return [];
     return sectors.flatMap((s) =>
@@ -626,20 +639,41 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+        {ignoredCount > 0 && (
+          <button className={styles.showIgnored} onClick={() => setShowIgnored(!showIgnored)}>
+            {showIgnored ? "Esconder os ignorados" : `Mostrar ${ignoredCount} alerta(s) ignorado(s)`}
+          </button>
+        )}
         <ul className={styles.alertList}>
-          {(tab === "sugestoes"
-            ? suggestions.map((s) => ({ date: s.date, endDate: s.date, text: `${labels.sectorShort[s.sector]}: ${s.text}`, crit: false }))
-            : (tab === "critico" ? criticos : atencao).map((a) => ({ date: a.date, endDate: a.endDate, text: a.message, crit: a.severity === "critico" }))
-          )
-            .slice(0, 30)
-            .map((a, i) => (
+          {tab !== "sugestoes" &&
+            (tab === "critico" ? criticos : atencao).slice(0, 40).map((a) => {
+              const ignored = ignoredKeys.has(alertKey(a));
+              return (
+                <li key={alertKey(a)} className={`${styles.alertItem} ${ignored ? styles.alertIgnored : ""}`}>
+                  <span className={styles.alertDate}>
+                    {scheduleEngine.WEEKDAY_SHORT[scheduleEngine.weekdayIndex(a.date)]} {a.date.slice(8)}/{a.date.slice(5, 7)}
+                    {a.endDate !== a.date && ` → ${a.endDate.slice(8)}/${a.endDate.slice(5, 7)}`}
+                  </span>
+                  <div className={styles.alertBody}>
+                    <span>{a.message}</span>
+                    {data && <AlertActions alert={a} data={data} today={today} ignored={ignored} onToggleIgnore={() => toggleIgnore(a)} />}
+                  </div>
+                  <button className={styles.alertGo} onClick={() => pickDate(a.date < today ? today : a.date)}>
+                    Ver dia <ArrowRight size={13} />
+                  </button>
+                </li>
+              );
+            })}
+          {tab === "sugestoes" &&
+            suggestions.slice(0, 30).map((sg, i) => (
               <li key={i} className={styles.alertItem}>
                 <span className={styles.alertDate}>
-                  {scheduleEngine.WEEKDAY_SHORT[scheduleEngine.weekdayIndex(a.date)]} {a.date.slice(8)}/{a.date.slice(5, 7)}
-                  {a.endDate !== a.date && ` → ${a.endDate.slice(8)}/${a.endDate.slice(5, 7)}`}
+                  {scheduleEngine.WEEKDAY_SHORT[scheduleEngine.weekdayIndex(sg.date)]} {sg.date.slice(8)}/{sg.date.slice(5, 7)}
                 </span>
-                <span>{a.text}</span>
-                <button className={styles.alertGo} onClick={() => pickDate(a.date < today ? today : a.date)}>
+                <span>
+                  {labels.sectorShort[sg.sector]}: {sg.text}
+                </span>
+                <button className={styles.alertGo} onClick={() => pickDate(sg.date < today ? today : sg.date)}>
                   Ver dia <ArrowRight size={13} />
                 </button>
               </li>

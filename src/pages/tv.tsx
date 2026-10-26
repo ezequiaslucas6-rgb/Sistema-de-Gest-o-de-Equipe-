@@ -6,7 +6,7 @@ import { Maximize, Minimize, X } from "lucide-react";
 import { APP_DATA_QUERY_KEY, useAppData } from "../helpers/useAppData";
 import { useCountUp, useNow } from "../helpers/useLive";
 import { scheduleEngine, DayStatus, Sector } from "../helpers/scheduleEngine";
-import { buildScheduleSnapshot } from "../helpers/buildScheduleSnapshot";
+import { alertKey, buildScheduleSnapshot } from "../helpers/buildScheduleSnapshot";
 import { buildEvents, liveStatus, longDate } from "../helpers/dashboardData";
 import { labels } from "../helpers/labels";
 import styles from "./tv.module.css";
@@ -77,7 +77,8 @@ export default function TvPage() {
   const snapshot = useMemo(() => (data ? buildScheduleSnapshot(data, today, 30) : null), [data, today]);
   const events = useMemo(() => (data ? buildEvents(data, today, 3).slice(0, 7) : []), [data, today]);
   const live = data ? liveStatus(now, data) : null;
-  const alerts = snapshot?.alerts ?? [];
+  const ignored = new Set(data?.ignoredAlerts ?? []);
+  const alerts = (snapshot?.alerts ?? []).filter((a) => !ignored.has(alertKey(a)));
   const teamsById = new Map(data?.teams.map((t) => [t.id, t]) ?? []);
 
   const clock = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
