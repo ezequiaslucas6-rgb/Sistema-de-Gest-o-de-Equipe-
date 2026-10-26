@@ -303,3 +303,26 @@
 .inlineLink:hover {
   text-decoration: underline;
 }
+
+/* dia com ajuste manual (feito na tabela) */
+.overridden {
+  position: relative;
+}
+
+.overridden::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--warning);
+  box-shadow: 0 0 0 1px var(--card);
+}
+
+.editorPop {
+  width: auto !important;
+  max-height: var(--radix-popover-content-available-height);
+  overflow-y: auto;
+}

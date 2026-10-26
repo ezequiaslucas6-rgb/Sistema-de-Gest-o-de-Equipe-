@@ -144,8 +144,17 @@ export interface PatternMetrics {
   maxConsecutiveFound: number;
 }
 
+export interface OverrideLike {
+  id: number;
+  teamId: number;
+  date: string;
+  status: "trabalho" | "folga" | "plantao";
+}
+
 export interface ResolvedDay {
   status: DayStatus;
+  /** ajuste manual do dia (clique na tabela), quando existe */
+  override?: OverrideLike | null;
   pattern: PatternLike | null;
   absentMemberIds: number[];
   availableMemberIds: number[];
@@ -517,6 +526,7 @@ function resolveTeamDay(
   onCall: OnCallLike[] = [],
   holidays: HolidayLike[] = [],
   trips: TripLike[] = [],
+  overrides: OverrideLike[] = [],
 ): ResolvedDay {
   const pattern = patternForDate(patterns, team.sector, date);
   const absentMemberIds = team.memberIds.filter((m) => isAbsent(absences, m, date));
@@ -533,6 +543,15 @@ function resolveTeamDay(
       return { ...base, trip, status: "viagem", absentMemberIds: [...away], availableMemberIds: [], onCall: null };
     }
     return { ...base, trip, status: "desfalcada", absentMemberIds: [...away], availableMemberIds: remaining, onCall: null };
+  }
+  // ajuste manual do dia (feito na tabela da escala): vence plantão, feriado e escala base
+  const override = overrides.find((o) => o.teamId === team.id && o.date === date) ?? null;
+  if (override) {
+    const shift = onCall.find((s) => s.teamId === team.id && (s.weekendStart === date || addDays(s.weekendStart, 1) === date)) ?? null;
+    if (override.status === "folga") return { ...base, override, status: "folga", onCall: null };
+    if (team.memberIds.length > 0 && availableMemberIds.length === 0) return { ...base, override, status: "ausente", onCall: shift };
+    if (absentMemberIds.length > 0 || team.memberIds.length < 2) return { ...base, override, status: "desfalcada", onCall: shift };
+    return { ...base, override, status: override.status, onCall: shift };
   }
   // plantão de fim de semana tem prioridade sobre a escala base
   const shift = onCall.find(

@@ -22,6 +22,7 @@ const TABLES = {
   trips: "escala_trips",
   tripSettings: "escala_trip_settings",
   meta: "escala_meta",
+  overrides: "escala_day_overrides",
 } as const;
 
 /** Erro do banco em português (duplicidade vira a mensagem da operação). */
@@ -62,7 +63,7 @@ const num = (v: unknown) => Number(v);
 
 // ---------- leitura ----------
 export async function cloudGetData(): Promise<OutputType> {
-  const [teams, technicians, absences, settings, patterns, shifts, holidays, lockers, trips, tripSettings, meta] = await Promise.all([
+  const [teams, technicians, absences, settings, patterns, shifts, holidays, lockers, trips, tripSettings, meta, overrides] = await Promise.all([
     rows(supabase.from(TABLES.teams).select("id, name, code, sector, vehicle, notes").order("sector", { ascending: false }).order("code")),
     rows(supabase.from(TABLES.technicians).select("id, name, phone, role, team_id").order("name")),
     rows(supabase.from(TABLES.absences).select("id, technician_id, start_date, end_date, kind, notes").order("start_date")),
@@ -74,6 +75,7 @@ export async function cloudGetData(): Promise<OutputType> {
     rows(supabase.from(TABLES.trips).select("*").order("depart_at", { ascending: false })),
     rows(supabase.from(TABLES.tripSettings).select("*").eq("id", 1)),
     rows(supabase.from(TABLES.meta).select("key, value").eq("key", "motor_config")),
+    rows(supabase.from(TABLES.overrides).select("id, team_id, date, status, note").order("date")),
   ]);
   const ts = tripSettings[0] ?? { full_value: 120, half_value: 60, min_hours_half: 6, half_on_return: true, paid_destinations: [] };
   return {
@@ -128,6 +130,7 @@ export async function cloudGetData(): Promise<OutputType> {
       paidDestinations: ts.paid_destinations ?? [],
     },
     motorConfig: (meta[0]?.value as OutputType["motorConfig"]) ?? null,
+    overrides: overrides.map((o) => ({ id: num(o.id), teamId: num(o.team_id), date: o.date, status: o.status, note: o.note })),
   };
 }
 
@@ -264,6 +267,19 @@ export const cloudOps: Record<string, Op> = {
       "Essa dupla já está de plantão nesse fim de semana.",
     ),
   deleteOnCall: ({ id }) => remove(TABLES.shifts, id),
+
+  // ajustes de um dia (tabela da escala)
+  saveOverride: async (i) => {
+    const { error } = await supabase
+      .from(TABLES.overrides)
+      .upsert({ team_id: i.teamId, date: i.date, status: i.status, note: i.note || null }, { onConflict: "team_id,date" });
+    fail(error);
+    return { ok: true };
+  },
+  deleteOverride: async ({ teamId, date }) => {
+    fail((await supabase.from(TABLES.overrides).delete().eq("team_id", teamId).eq("date", date)).error);
+    return { ok: true };
+  },
 
   // feriados
   saveHoliday: (i) =>

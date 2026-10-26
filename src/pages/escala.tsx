@@ -10,6 +10,8 @@ import { Skeleton } from "../components/Skeleton";
 import { ToggleGroup, ToggleGroupItem } from "../components/ToggleGroup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/Dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/Popover";
+import { DayEditor } from "../components/DayEditor";
 import { useAppData } from "../helpers/useAppData";
 import { useAppMutations } from "../helpers/useAppMutations";
 import { scheduleEngine, Sector } from "../helpers/scheduleEngine";
@@ -42,6 +44,8 @@ export default function SchedulePage() {
   const [month, setMonth] = useState(monthStart(today));
   const [filter, setFilter] = useState<Filter>("todos");
   const [selected, setSelected] = useState<{ sector: Sector; date: string; view: TeamDayView } | null>(null);
+  // célula sendo editada direto na tabela
+  const [editing, setEditing] = useState<{ teamId: number; date: string } | null>(null);
   const [absenceTech, setAbsenceTech] = useState<string>("");
   const [absenceKind, setAbsenceKind] = useState<AbsenceKind>("folga_extra");
 
@@ -98,7 +102,7 @@ export default function SchedulePage() {
       <PageHeader
         eyebrow="Cronograma mensal"
         title="Escala das equipes"
-        description="Clique em qualquer célula para ver a dupla, registrar ausência ou mover a folga daquele dia do ciclo."
+        description="Clique em qualquer dia da tabela para mudar na hora: em campo, folga, plantão ou técnico ausente. O ponto laranja marca os dias ajustados à mão."
         actions={
           <Button variant="outline" onClick={() => window.print()}>
             <Printer size={16} /> Imprimir
@@ -184,17 +188,39 @@ export default function SchedulePage() {
                           {days.map((d) => {
                             const view = d.teams[ti];
                             const wd = scheduleEngine.weekdayIndex(d.date);
+                            const active = editing?.teamId === team.id && editing.date === d.date;
+                            const cell = (
+                              <DayCell
+                                status={view.status}
+                                today={d.date === today}
+                                className={view.overrideId !== null ? styles.overridden : ""}
+                                onClick={() => setEditing(active ? null : { teamId: team.id, date: d.date })}
+                                aria-label={`${team.code} ${d.date} ${labels.status[view.status]}`}
+                                title={view.overrideId !== null ? "Ajuste manual deste dia" : undefined}
+                              />
+                            );
                             return (
                               <td key={d.date} className={`${styles.cellTd} ${wd >= 5 ? styles.weekend : ""}`}>
-                                <DayCell
-                                  status={view.status}
-                                  today={d.date === today}
-                                  onClick={() => {
-                                    setSelected({ sector, date: d.date, view });
-                                    setAbsenceTech("");
-                                  }}
-                                  aria-label={`${team.code} ${d.date} ${labels.status[view.status]}`}
-                                />
+                                {active ? (
+                                  <Popover open onOpenChange={(o) => !o && setEditing(null)}>
+                                    <PopoverTrigger asChild>{cell}</PopoverTrigger>
+                                    <PopoverContent side="bottom" align="center" collisionPadding={12} className={styles.editorPop}>
+                                      <DayEditor
+                                        data={data!}
+                                        date={d.date}
+                                        view={view}
+                                        onDone={() => setEditing(null)}
+                                        onMore={() => {
+                                          setEditing(null);
+                                          setSelected({ sector, date: d.date, view });
+                                          setAbsenceTech("");
+                                        }}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                ) : (
+                                  cell
+                                )}
                               </td>
                             );
                           })}

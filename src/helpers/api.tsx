@@ -150,6 +150,17 @@ export const onCallAdjustSchema = z.object({
 /** Troca de duplas no plantão (ex.: quando uma viagem cai no fim de semana de plantão). */
 export const applyOnCallAdjust = (body: z.infer<typeof onCallAdjustSchema>) => dbCall<{ changed: number }>("applyOnCallAdjust", onCallAdjustSchema.parse(body));
 
+export const overrideSchema = z.object({
+  teamId: z.number().int(),
+  date: isoDate,
+  status: z.enum(["trabalho", "folga", "plantao"]),
+  note: z.string().trim().max(200).nullable(),
+});
+/** Ajuste de um dia só para a dupla (clique na tabela da escala). */
+export const saveOverride = (body: z.infer<typeof overrideSchema>) => dbCall<Ok>("saveOverride", overrideSchema.parse(body));
+export const deleteOverride = (body: { teamId: number; date: string }) =>
+  dbCall<Ok>("deleteOverride", z.object({ teamId: z.number().int(), date: isoDate }).parse(body));
+
 export const onCallSchema = z
   .object({
     id: z.number().int().optional(),

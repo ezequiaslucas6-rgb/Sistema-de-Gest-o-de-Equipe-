@@ -38,6 +38,8 @@ export function useAppMutations() {
     saveMotorConfig: useMutation(opts(api.saveMotorConfig)),
     applyOnCallAdjust: useMutation(opts(api.applyOnCallAdjust)),
     saveOnCall: useMutation(opts(api.saveOnCall, "Plantão salvo")),
+    saveOverride: useMutation(opts(api.saveOverride, "Dia atualizado")),
+    deleteOverride: useMutation(opts(api.deleteOverride, "Dia voltou ao padrão da escala")),
     deleteOnCall: useMutation(opts(api.deleteOnCall, "Plantão removido")),
     saveHoliday: useMutation(opts(api.saveHoliday, "Feriado salvo")),
     deleteHoliday: useMutation(opts(api.deleteHoliday, "Feriado removido")),

@@ -42,7 +42,7 @@ O mesmo sistema também abre no navegador, sem instalar:
 |---|---|
 | Painel | Centro de operações: navegação por dia (← → / H), filtro de setor, indicadores, gráfico de cobertura clicável, detalhes da dupla, status "agora" ao vivo, próximos eventos, alertas e sugestões |
 | Modo TV | Tela cheia escura para o monitor do NOC: cobertura por setor, duplas, próximos 7 dias e faixa de alertas; atualiza sozinho (Esc sai, F tela cheia) |
-| Escala | Grade mensal por dupla; clique para registrar ausência ou mover folga |
+| Escala | Grade mensal por dupla, **editável direto na tabela**: clique no dia → Em campo / Folga / Plantão (só aquele dia), técnico ausente (férias, atestado…) por um período, ou folga fixa no ciclo; o ponto laranja marca os ajustes manuais |
 | Escala de plantão | **Escala salva (editar):** quem está de plantão em cada fim de semana, folga e feriado — clique para trocar, grava na hora. **Gerar rodízio automático:** monta meses de plantão (6x1 e 5x2) com feriados, folgas e trocas por ausência/viagem |
 | Regras e banco de horas | Horário do plantão por setor e banco de horas de cada dupla |
 | Viagens e diárias | Viagens da equipe (dupla fica "V" na escala), cálculo de diárias cheias/meias, adiantamento, status até o pagamento, relatório por técnico e CSV |

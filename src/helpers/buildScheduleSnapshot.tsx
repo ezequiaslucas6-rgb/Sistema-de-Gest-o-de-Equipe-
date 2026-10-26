@@ -12,6 +12,8 @@ export interface TeamDayView {
   onCallId: number | null;
   /** viagem que tirou a dupla (ou um técnico) da base neste dia */
   tripId: number | null;
+  /** ajuste manual do dia (clique na tabela) */
+  overrideId: number | null;
 }
 
 export interface SectorDayView {
@@ -64,6 +66,7 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           data.onCallShifts,
           data.holidays,
           data.trips,
+          data.overrides ?? [],
         );
         return {
           teamId: team.id,
@@ -74,6 +77,7 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           cycleDay: r.pattern ? scheduleEngine.cycleDayIndex(r.pattern, date) : null,
           onCallId: r.onCall?.id ?? null,
           tripId: r.trip?.id ?? null,
+          overrideId: r.override?.id ?? null,
         };
       });
       const coverage = views.filter((v) => v.status === "trabalho" || v.status === "plantao").length;

@@ -109,6 +109,15 @@ export type PatternDTO = {
   daysOff: PatternDays;
 };
 
+/** Ajuste de um dia só para a dupla (feito clicando na tabela da escala); vence a escala base. */
+export type DayOverrideDTO = {
+  id: number;
+  teamId: number;
+  date: string;
+  status: "trabalho" | "folga" | "plantao";
+  note: string | null;
+};
+
 export type MotorConfigDTO = {
   order: { suporte: number[]; infraestrutura: number[] };
   excluded: number[];
@@ -129,4 +138,5 @@ export type OutputType = {
   tripSettings: TripSettingsDTO;
   /** preferências salvas do motor de plantão (null até a primeira gravação) */
   motorConfig: MotorConfigDTO | null;
+  overrides: DayOverrideDTO[];
 };
