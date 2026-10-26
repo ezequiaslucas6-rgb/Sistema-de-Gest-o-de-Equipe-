@@ -15,6 +15,11 @@ e o que um grava aparece nos outros na hora. Precisa de internet.
      Clique em **Mais informações → Executar assim mesmo**.
 3. Quer usar sem instalar? Baixe **`Escala-Tecnica-Portatil-…exe`** e execute direto.
 
+## Acesso pelo navegador
+
+O mesmo sistema também abre no navegador, sem instalar:
+**https://ezequiaslucas6-rgb.github.io/Sistema-de-Gest-o-de-Equipe-/** (publicado a cada push na `main`).
+
 ## Login e acesso
 
 - Entre com o mesmo **e-mail e senha do sistema da frota** (Supabase Auth do mesmo projeto).
