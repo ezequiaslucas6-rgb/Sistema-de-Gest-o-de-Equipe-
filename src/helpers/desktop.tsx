@@ -1,3 +1,5 @@
+import { cloudOps } from "./cloud";
+
 /** Ponte com o processo principal do app de desktop (definida em electron/preload.cjs). */
 export interface EscalaBridge {
   call: (op: string, input?: unknown) => Promise<unknown>;
@@ -20,12 +22,19 @@ export function desktop(): EscalaBridge {
   return window.escala;
 }
 
-/** Chama uma operação do banco local; tira o prefixo técnico das mensagens de erro do Electron. */
-export async function dbCall<T>(op: string, input?: unknown): Promise<T> {
+/** Lê/grava no banco local do computador (usado só para enviar os dados antigos para a nuvem). */
+export async function localCall<T>(op: string, input?: unknown): Promise<T> {
   try {
     return (await desktop().call(op, input)) as T;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(msg.replace(/^Error invoking remote method '[^']+': (Error: )?/, ""));
   }
+}
+
+/** Operação de dados do sistema: agora sempre no Supabase (nuvem). */
+export async function dbCall<T>(op: string, input?: unknown): Promise<T> {
+  const fn = cloudOps[op];
+  if (!fn) throw new Error(`Operação desconhecida: ${op}`);
+  return (await fn(input)) as T;
 }

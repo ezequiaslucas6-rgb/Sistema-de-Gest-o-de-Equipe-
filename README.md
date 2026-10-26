@@ -4,7 +4,8 @@ Programa para Windows que organiza as duplas de **Suporte Técnico** e **Infraes
 internet: escala 6x1 e transição para 5x2, plantão de fim de semana com compensação, feriados, ausências, banco de horas
 e painel de cobertura.
 
-Funciona **sem internet e sem login**. Os dados ficam num banco **SQLite** no próprio computador.
+Os dados ficam na **nuvem (Supabase)**: qualquer computador com o programa e um login liberado vê os mesmos dados,
+e o que um grava aparece nos outros na hora. Precisa de internet.
 
 ## Instalar
 
@@ -14,20 +15,21 @@ Funciona **sem internet e sem login**. Os dados ficam num banco **SQLite** no pr
      Clique em **Mais informações → Executar assim mesmo**.
 3. Quer usar sem instalar? Baixe **`Escala-Tecnica-Portatil-…exe`** e execute direto.
 
-## Onde ficam os dados
+## Login e acesso
 
-```
-Documentos\Escala Técnica\escala-tecnica.sqlite
-```
+- Entre com o mesmo **e-mail e senha do sistema da frota** (Supabase Auth do mesmo projeto).
+- Só e-mails cadastrados na tabela **`escala_usuarios`** veem os dados da escala (regras RLS em todas as tabelas `escala_*`).
+  Para liberar alguém: `insert into escala_usuarios (email) values ('pessoa@exemplo.com');`
 
-No programa, o ícone de **banco de dados** (canto inferior esquerdo) mostra o caminho e permite:
+## Dados
 
-- **Fazer backup…** — salva uma cópia do banco (sugere a área de trabalho);
-- **Restaurar backup…** — volta uma cópia (o banco atual é guardado antes, com o final `.antes-da-restauracao`);
-- **Abrir pasta do banco**.
-
-Na primeira vez que abre, o programa cria o banco com as 7 duplas, as escalas 6x1/5x2, o rodízio de plantões e os
-feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pelos nomes reais em **Equipes e duplas**.
+- Tabelas `escala_*` no projeto Supabase (duplas, técnicos, ausências, regras, escalas, plantões, feriados, armários,
+  viagens, regras das diárias e configuração do motor).
+- Ícone de **nuvem** (canto inferior esquerdo): usuário logado, **Baixar backup (.json)**, **Enviar dados deste
+  computador…** e **Sair**.
+- **Versões anteriores guardavam tudo num arquivo local** (`Documentos\Escala Técnica\escala-tecnica.sqlite`). No primeiro
+  login num computador que tem esse arquivo com dados próprios, o programa oferece **enviar esses dados para a nuvem**
+  (substitui o que está lá). O arquivo local não é apagado.
 
 ## Telas
 
@@ -66,13 +68,16 @@ feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pe
 
 ```
 electron/
-  main.cjs      janela do programa, backup/restauração
-  preload.cjs   ponte segura entre a janela e o banco
-  db.cjs        banco SQLite (sql.js) — tabelas e operações de gravação
-  seed.json     dados iniciais da primeira execução
+  main.cjs      janela do programa
+  preload.cjs   ponte com o banco local antigo (só para enviar os dados para a nuvem)
+  db.cjs        banco SQLite local das versões anteriores (leitura para a migração)
+  seed.json     dados iniciais do banco local
 src/
   helpers/scheduleEngine.tsx   motor de regras (escala, plantão, feriados, banco de horas)
-  helpers/api.tsx              validação e chamadas ao banco
+  helpers/api.tsx              validação das entradas
+  helpers/cloud.tsx            leitura/gravação no Supabase, envio do banco local, tempo real
+  helpers/supabase.tsx         cliente Supabase (URL e chave publicável)
+  components/AuthGate.tsx      login e verificação de acesso
   pages/                       telas
   components/                  menu lateral, células da escala, kit de interface
 build/icon.png                 ícone do programa e do atalho

@@ -1,0 +1,37 @@
+.dialog {
+  width: 36rem !important;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+  margin: var(--spacing-3) 0;
+}
+
+.col {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  margin-bottom: var(--spacing-2);
+  color: var(--primary);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 2px 0;
+}
+
+.busy {
+  font-size: 0.85rem;
+  color: var(--primary);
+}

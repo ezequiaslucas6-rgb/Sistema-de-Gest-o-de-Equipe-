@@ -1,5 +1,5 @@
 /**
- * Acesso aos dados no banco SQLite local (via electron/db.cjs). Valida as entradas aqui,
+ * Acesso aos dados (Supabase, via helpers/cloud.tsx). Valida as entradas aqui,
  * com as mesmas regras dos endpoints originais, antes de gravar.
  */
 import { z } from "zod";

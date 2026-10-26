@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Database, FolderOpen, Download, Upload } from "lucide-react";
+import { Cloud, CloudUpload, Download, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,66 +9,59 @@ import {
   DropdownMenuTrigger,
 } from "./DropdownMenu";
 import { Button } from "./Button";
-import { desktop } from "../helpers/desktop";
+import { supabase } from "../helpers/supabase";
+import { cloudGetData } from "../helpers/cloud";
 import { toast } from "../helpers/toast";
+import { OPEN_IMPORT_EVENT } from "./CloudImportDialog";
 import styles from "./DatabaseMenu.module.css";
 
-/** Menu do banco local: onde está o arquivo, backup, restauração. */
+/** Menu dos dados: nuvem (Supabase), usuário logado, backup em arquivo e envio dos dados do banco local antigo. */
 export const DatabaseMenu = ({ className }: { className?: string }) => {
-  const qc = useQueryClient();
-  const [dbPath, setDbPath] = useState<string>("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    window.escala?.info().then((i) => setDbPath(i.dbPath));
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
   }, []);
 
-  const run = async (fn: () => Promise<void>) => {
+  const backup = async () => {
     try {
-      await fn();
+      const data = await cloudGetData();
+      const blob = new Blob([JSON.stringify({ exportadoEm: new Date().toISOString(), ...data }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `escala-tecnica-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast.success("Backup gerado");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, "") : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-md" className={className} aria-label="Banco de dados" title="Banco de dados">
-          <Database size={18} />
+        <Button variant="ghost" size="icon-md" className={className} aria-label="Dados na nuvem" title="Dados na nuvem">
+          <Cloud size={18} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className={styles.content}>
         <DropdownMenuLabel>
-          <div className={styles.label}>Banco de dados neste computador</div>
-          <div className={styles.path}>{dbPath || "—"}</div>
+          <div className={styles.label}>Dados na nuvem (Supabase)</div>
+          <div className={styles.path}>{email || "—"}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() =>
-            run(async () => {
-              const r = await desktop().backup();
-              if (r.saved) toast.success("Backup salvo", { description: r.filePath });
-            })
-          }
-        >
-          <Download size={15} /> Fazer backup…
+        <DropdownMenuItem onClick={backup}>
+          <Download size={15} /> Baixar backup (.json)
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() =>
-            run(async () => {
-              if (!window.confirm("Restaurar um backup substitui os dados atuais (uma cópia do banco atual é guardada na mesma pasta). Continuar?")) return;
-              const r = await desktop().restore();
-              if (r.restored) {
-                await qc.invalidateQueries();
-                toast.success("Backup restaurado");
-              }
-            })
-          }
-        >
-          <Upload size={15} /> Restaurar backup…
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => run(async () => void (await desktop().openFolder()))}>
-          <FolderOpen size={15} /> Abrir pasta do banco
+        {window.escala && (
+          <DropdownMenuItem onClick={() => window.dispatchEvent(new Event(OPEN_IMPORT_EVENT))}>
+            <CloudUpload size={15} /> Enviar dados deste computador…
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
+          <LogOut size={15} /> Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

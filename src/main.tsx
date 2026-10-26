@@ -5,6 +5,7 @@ import "./base.css";
 import "./global.css";
 import { GlobalContextProviders } from "./components/_globalContextProviders";
 import { AppShell } from "./components/AppShell";
+import { AuthGate } from "./components/AuthGate";
 import DashboardPage from "./pages/_index";
 import SchedulePage from "./pages/escala";
 import OnCallPage from "./pages/plantao";
@@ -35,6 +36,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HashRouter>
       <GlobalContextProviders>
+        <AuthGate>
         <Routes>
           {pages.map((p) => (
             <Route key={p.path} path={p.path} element={<AppShell>{p.element}</AppShell>} />
@@ -43,6 +45,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/tv" element={<TvPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </AuthGate>
       </GlobalContextProviders>
     </HashRouter>
   </StrictMode>,
