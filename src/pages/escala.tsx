@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { ChevronLeft, ChevronRight, Printer, Repeat } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
@@ -299,7 +300,9 @@ export default function SchedulePage() {
                         {isCompDay
                           ? `Folga de compensação do plantão de ${scheduleEngine.formatDate(shift.weekendStart)}.`
                           : `Plantão do fim de semana ${scheduleEngine.formatDate(shift.weekendStart)} — folga em ${shift.compDates.map(scheduleEngine.formatDate).join(" e ")}.`}{" "}
-                        Ajuste em Plantões.
+                        <Link to="/motor" className={styles.inlineLink}>
+                          Trocar na Escala de plantão →
+                        </Link>
                       </span>
                     </div>
                   );

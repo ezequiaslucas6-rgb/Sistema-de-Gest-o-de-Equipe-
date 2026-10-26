@@ -280,7 +280,7 @@ export default function DashboardPage() {
             <Skeleton className={styles.skelKpi} />
           )}
         </div>
-        <Link to="/plantao" className={styles.kpi} style={{ ["--i" as string]: 2 }}>
+        <Link to="/motor" className={styles.kpi} style={{ ["--i" as string]: 2 }}>
           <div className={styles.micro}>
             Plantão {scheduleEngine.formatDate(day?.sat ?? today).slice(0, 5)}–{scheduleEngine.formatDate(scheduleEngine.addDays(day?.sat ?? today, 1)).slice(0, 5)}
           </div>

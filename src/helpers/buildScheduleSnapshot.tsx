@@ -111,7 +111,7 @@ export function buildScheduleSnapshot(data: OutputType, startDate: string, days:
           });
           if (substitutes.length > 0) {
             suggestions.push(
-              `Plantão: substituir ${teamCode.get(v.teamId)} por ${substitutes.map((s) => teamCode.get(s.teamId)).join(" ou ")} (ajuste em Plantões).`,
+              `Plantão: substituir ${teamCode.get(v.teamId)} por ${substitutes.map((s) => teamCode.get(s.teamId)).join(" ou ")} (ajuste em Escala de plantão).`,
             );
           }
         }

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Cpu, PartyPopper, Repeat, Sparkles, Star } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, CalendarCheck, CheckCircle2, Cpu, MousePointerClick, PartyPopper, Repeat, Sparkles, Star } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
+import { OnCallEditor } from "../components/OnCallEditor";
 import { Button } from "../components/Button";
 import { Skeleton } from "../components/Skeleton";
 import { Switch } from "../components/Switch";
@@ -30,6 +31,8 @@ export default function MotorPage() {
   const [excluded, setExcluded] = useState<number[]>([]);
   const [respect, setRespect] = useState(true);
   const [confirm, setConfirm] = useState(false);
+  const [tab, setTab] = useState<"editar" | "gerar">("editar");
+  const [weeks, setWeeks] = useState(12);
 
   // padrões: ordem por código, fim = véspera do 5x2, abre quem já está de plantão no primeiro fim de semana
   useEffect(() => {
@@ -129,7 +132,13 @@ export default function MotorPage() {
         holidays: result.holidays.filter((h) => h.teamIds.length > 0).map((h) => ({ id: h.holidayId, onCallTeamIds: h.teamIds, compDate: h.compDate })),
         basePatterns: result.missingBase.map((sector) => ({ sector, startDate: scheduleEngine.mondayOf(from) })),
       },
-      { onSuccess: () => setConfirm(false) },
+      {
+        onSuccess: () => {
+          setConfirm(false);
+          setTab("editar");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+      },
     );
   };
 
@@ -143,19 +152,56 @@ export default function MotorPage() {
   return (
     <div className={styles.page}>
       <Helmet>
-        <title>Motor de plantão · Escala Técnica</title>
+        <title>Escala de plantão · Escala Técnica</title>
       </Helmet>
       <PageHeader
-        eyebrow="Geração automática · banco de horas"
-        title="Motor de plantão"
-        description="Gera o rodízio de plantão dos dois setores (6x1 e depois 5x2), com folgas de compensação, plantões de feriado e trocas automáticas quando alguém está ausente ou viajando."
+        eyebrow="Plantão de fim de semana · feriados · banco de horas"
+        title="Escala de plantão"
+        description="Veja e edite quem está de plantão em cada fim de semana, a folga e os feriados. Para montar vários meses de uma vez, use o rodízio automático."
         actions={
-          <Button className={styles.gradBtn} disabled={!result || weekendsCount === 0} onClick={() => setConfirm(true)}>
-            <Sparkles size={16} /> Aplicar na escala
-          </Button>
+          tab === "gerar" ? (
+            <Button className={styles.gradBtn} disabled={!result || weekendsCount === 0} onClick={() => setConfirm(true)}>
+              <Sparkles size={16} /> Aplicar na escala
+            </Button>
+          ) : (
+            <Button className={styles.gradBtn} onClick={() => setTab("gerar")}>
+              <Cpu size={16} /> Gerar rodízio automático
+            </Button>
+          )
         }
       />
 
+      <div className={styles.tabs} role="tablist">
+        <button role="tab" aria-selected={tab === "editar"} className={tab === "editar" ? styles.tabOn : ""} onClick={() => setTab("editar")}>
+          <CalendarCheck size={16} /> Escala salva (editar)
+        </button>
+        <button role="tab" aria-selected={tab === "gerar"} className={tab === "gerar" ? styles.tabOn : ""} onClick={() => setTab("gerar")}>
+          <Cpu size={16} /> Gerar rodízio automático
+        </button>
+      </div>
+
+      {tab === "editar" && data && (
+        <section className={styles.card}>
+          <div className={styles.editHead}>
+            <p className={styles.howto}>
+              <MousePointerClick size={16} /> Clique na dupla para trocar quem faz o plantão, na data da folga para mudar o dia e no feriado para escolher quem
+              trabalha. Tudo é salvo na hora.
+            </p>
+            <div className={styles.seg}>
+              {[8, 12, 26].map((w) => (
+                <button key={w} className={weeks === w ? styles.segOn : ""} onClick={() => setWeeks(w)}>
+                  {w === 26 ? "6 meses" : `${w} semanas`}
+                </button>
+              ))}
+            </div>
+          </div>
+          <OnCallEditor data={data} from={saturdayOnOrBefore(today)} weeks={weeks} />
+        </section>
+      )}
+      {tab === "editar" && !data && <Skeleton className={styles.skel} />}
+
+      {tab === "gerar" && (
+      <>
       <div className={styles.top}>
         <section className={styles.card}>
           <h2 className={styles.h2}>
@@ -428,6 +474,9 @@ export default function MotorPage() {
         </>
       )}
 
+      </>
+      )}
+
       <Dialog open={confirm} onOpenChange={setConfirm}>
         <DialogContent>
           <DialogHeader>
@@ -451,7 +500,7 @@ export default function MotorPage() {
       </Dialog>
 
       <p className={styles.footer}>
-        Depois de aplicar, ajustes pontuais podem ser feitos em <Link to="/plantao">Plantões</Link> e <Link to="/feriados">Feriados</Link>.
+        Horário do plantão e banco de horas por dupla ficam em <Link to="/plantao">Regras e banco de horas</Link>.
       </p>
     </div>
   );

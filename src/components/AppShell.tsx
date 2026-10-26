@@ -8,8 +8,8 @@ import styles from "./AppShell.module.css";
 const NAV = [
   { to: "/", label: "Painel", icon: LayoutDashboard, end: true },
   { to: "/escala", label: "Escala", icon: CalendarRange },
-  { to: "/plantao", label: "Plantões", icon: Siren },
-  { to: "/motor", label: "Motor de plantão", icon: Cpu },
+  { to: "/motor", label: "Escala de plantão", icon: Siren },
+  { to: "/plantao", label: "Regras e banco de horas", icon: Cpu },
   { to: "/feriados", label: "Feriados", icon: PartyPopper },
   { to: "/viagens", label: "Viagens e diárias", icon: Plane },
   { to: "/planejamento", label: "Planejamento 6x1 → 5x2", icon: Wand2 },

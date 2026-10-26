@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
-import { AlertTriangle, CalendarClock, Cpu, Pencil, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CalendarClock, Cpu, Pencil, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
@@ -174,19 +174,14 @@ export default function OnCallPage() {
       </Helmet>
       <PageHeader
         eyebrow="Fim de semana"
-        title="Plantões e compensação"
-        description="Rodízio de plantão de fim de semana por setor, folga de compensação no fim de semana seguinte e banco de horas de cada dupla."
+        title="Regras e banco de horas"
+        description="Horário do plantão de cada setor e banco de horas de cada dupla (horas de plantão x dias de folga)."
         actions={
-          <>
-            <Button asChild variant="outline">
-              <Link to="/motor">
-                <Cpu size={16} /> Motor de plantão
-              </Link>
-            </Button>
-            <Button onClick={() => openEdit()}>
-              <Plus size={16} /> Lançar plantão
-            </Button>
-          </>
+          <Button asChild>
+            <Link to="/motor">
+              <CalendarCheck size={16} /> Editar escala de plantão
+            </Link>
+          </Button>
         }
       />
 
@@ -243,126 +238,15 @@ export default function OnCallPage() {
         </div>
       </section>
 
-      {/* Próximos plantões */}
-      <section className={styles.section}>
-        <h2 className={styles.h2}>Próximos fins de semana</h2>
-        <div className={styles.weekendList}>
-          {!data && <Skeleton className={styles.skel} />}
-          {data &&
-            weekends.map((sat) => {
-              const shifts = data.onCallShifts.filter((s) => s.weekendStart === sat);
-              const compensating = data.onCallShifts.filter((s) => s.weekendStart === scheduleEngine.addDays(sat, -7));
-              return (
-                <div key={sat} className={styles.weekendRow}>
-                  <div className={styles.weekendDate}>
-                    <span className={styles.wdBig}>
-                      {sat.slice(8)}–{scheduleEngine.addDays(sat, 1).slice(8)}/{scheduleEngine.addDays(sat, 1).slice(5, 7)}
-                    </span>
-                    {sat <= today && today <= scheduleEngine.addDays(sat, 1) && <Badge variant="warning">Agora</Badge>}
-                  </div>
-                  <div className={styles.weekendSectors}>
-                    {labels.sectors.map((sector) => {
-                      const list = shifts.filter((s) => teamById.get(s.teamId)?.sector === sector);
-                      const comp = compensating.filter((s) => teamById.get(s.teamId)?.sector === sector);
-                      return (
-                        <div key={sector} className={styles.weekendSector}>
-                          <span className={styles.sectorTag}>{labels.sectorShort[sector]}</span>
-                          {list.length === 0 && <span className={styles.missing}>sem plantão definido</span>}
-                          {list.map((s) => {
-                            const team = teamById.get(s.teamId);
-                            const absent = membersOf(s.teamId).filter(
-                              (m) =>
-                                scheduleEngine.isAbsent(data.absences, m.id, sat) ||
-                                scheduleEngine.isAbsent(data.absences, m.id, scheduleEngine.addDays(sat, 1)),
-                            );
-                            return (
-                              <span key={s.id} className={styles.shiftChip}>
-                                <b>{team?.code}</b> {membersOf(s.teamId).map((m) => m.name).join(" + ")}
-                                {absent.length > 0 && (
-                                  <span className={styles.absent}>
-                                    <AlertTriangle size={12} /> {absent.map((m) => m.name).join(", ")} ausente
-                                  </span>
-                                )}
-                                <span className={styles.compInfo}>folga {s.compDates.map(shortDate).join(" e ")}</span>
-                                <button className={styles.iconBtn} onClick={() => openEdit(s)} aria-label="Editar plantão">
-                                  <Pencil size={13} />
-                                </button>
-                                <button
-                                  className={styles.iconBtn}
-                                  aria-label="Remover plantão"
-                                  onClick={() => window.confirm("Remover este plantão?") && deleteOnCall.mutate({ id: s.id })}
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              </span>
-                            );
-                          })}
-                          {comp.length > 0 && (
-                            <span className={styles.compensating}>compensando: {comp.map((c) => teamById.get(c.teamId)?.code).join(", ")}</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <Button variant="ghost" size="icon-md" onClick={() => openEdit(undefined, sat)} aria-label="Adicionar plantão">
-                    <Plus size={16} />
-                  </Button>
-                </div>
-              );
-            })}
-        </div>
-      </section>
-
-      {/* Gerador */}
-      <section className={styles.section}>
-        <h2 className={styles.h2}>Gerar rodízio automático</h2>
-        <div className={styles.genBar}>
-          <ToggleGroup type="single" value={genSector} onValueChange={(v) => v && (setGenSector(v as Sector), setGenPreview(null))}>
-            {labels.sectors.map((s) => (
-              <ToggleGroupItem key={s} value={s}>
-                {labels.sectorShort[s]}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-          <div className={styles.genField}>
-            <label className={styles.label}>A partir do sábado</label>
-            <DateField value={genStart} onChange={setGenStart} onlyWeekday={6} />
-          </div>
-          <div className={styles.genField}>
-            <label className={styles.label}>Fins de semana</label>
-            <Input type="number" min={1} max={52} value={genWeeks} onChange={(e) => setGenWeeks(Math.min(52, Math.max(1, Number(e.target.value) || 1)))} />
-          </div>
-          <Button onClick={generate}>
-            <RefreshCw size={16} /> Gerar
-          </Button>
-        </div>
-        <p className={styles.muted}>
-          Quem fez menos plantões vai primeiro, ninguém pega dois fins de semana seguidos e duplas com técnico ausente no fim de semana ficam por
-          último. Salvar substitui os plantões do setor nesse intervalo.
-        </p>
-        {genPreview && (
-          <div className={styles.genPreview}>
-            {genPreview.map((g) => {
-              const team = teamById.get(g.teamId);
-              return (
-                <div key={`${g.weekendStart}-${g.teamId}`} className={styles.genItem}>
-                  <span className={styles.genDate}>{shortDate(g.weekendStart)}</span>
-                  <b>{team?.code}</b>
-                  <span className={styles.muted}>folga {g.compDates.map(shortDate).join(" e ")}</span>
-                </div>
-              );
-            })}
-            <div className={styles.genActions}>
-              <Button onClick={saveGenerated} disabled={bulkOnCall.isPending}>
-                <Save size={16} /> Salvar rodízio
-              </Button>
-              <Button variant="ghost" onClick={() => setGenPreview(null)}>
-                Descartar
-              </Button>
-            </div>
-          </div>
-        )}
-      </section>
+      {/* A escala de plantão (quem, quando, folga) é editada numa tela só */}
+      <Link to="/motor" className={styles.goEditor}>
+        <CalendarCheck size={22} />
+        <span>
+          <b>Escala de plantão</b>
+          <small>Ver e editar quem está de plantão em cada fim de semana, a folga e os feriados — ou gerar o rodízio de vários meses.</small>
+        </span>
+        <span className={styles.goArrow}>Abrir →</span>
+      </Link>
 
       {/* Banco de horas */}
       <section className={styles.section}>

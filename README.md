@@ -36,8 +36,8 @@ feriados de 2026–2027. Os técnicos vêm como "Técnico 01…14" — troque pe
 | Painel | Centro de operações: navegação por dia (← → / H), filtro de setor, indicadores, gráfico de cobertura clicável, detalhes da dupla, status "agora" ao vivo, próximos eventos, alertas e sugestões |
 | Modo TV | Tela cheia escura para o monitor do NOC: cobertura por setor, duplas, próximos 7 dias e faixa de alertas; atualiza sozinho (Esc sai, F tela cheia) |
 | Escala | Grade mensal por dupla; clique para registrar ausência ou mover folga |
-| Plantões | Regras do plantão, lançamentos manuais, compensação e banco de horas |
-| Motor de plantão | Gera o rodízio dos dois setores até o fim do 6x1, plantões de feriado, folgas de compensação, trocas automáticas por ausência e banco de horas projetado |
+| Escala de plantão | **Escala salva (editar):** quem está de plantão em cada fim de semana, folga e feriado — clique para trocar, grava na hora. **Gerar rodízio automático:** monta meses de plantão (6x1 e 5x2) com feriados, folgas e trocas por ausência/viagem |
+| Regras e banco de horas | Horário do plantão por setor e banco de horas de cada dupla |
 | Viagens e diárias | Viagens da equipe (dupla fica "V" na escala), cálculo de diárias cheias/meias, adiantamento, status até o pagamento, relatório por técnico e CSV |
 | Feriados | Importação dos feriados nacionais, plantão no feriado e folga no dia útil seguinte |
 | Planejamento 6x1 → 5x2 | Gerador de escala e comparativo entre as duas |

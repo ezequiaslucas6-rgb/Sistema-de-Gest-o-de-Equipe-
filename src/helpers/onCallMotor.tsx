@@ -182,7 +182,7 @@ export function runMotor(input: MotorInput): MotorResult {
       const next = data.onCallShifts.find((s) => s.weekendStart === after && teamById.get(s.teamId)?.sector === sector);
       if (last && next && next.teamId === last.teamId) {
         warnings.push(
-          `${labels.sectorShort[sector]}: o plantão já cadastrado em ${scheduleEngine.formatDate(after).slice(0, 5)} é de ${code(next.teamId)}, que também fecha o 6x1 em ${scheduleEngine.formatDate(lastSat).slice(0, 5)} — dois fins de semana seguidos. Ajuste em Plantões ou estenda o período.`,
+          `${labels.sectorShort[sector]}: o plantão já cadastrado em ${scheduleEngine.formatDate(after).slice(0, 5)} é de ${code(next.teamId)}, que também fecha o 6x1 em ${scheduleEngine.formatDate(lastSat).slice(0, 5)} — dois fins de semana seguidos. Ajuste em "Escala salva (editar)" ou estenda o período.`,
         );
       }
     }
@@ -358,7 +358,7 @@ export function planOnCallAdjustment(
         .sort((a, b) => (a.next?.weekendStart ?? "9999").localeCompare(b.next?.weekendStart ?? "9999"));
       const pick = candidates[0];
       if (!pick) {
-        out.messages.push(`${code(teamA)} está de plantão em ${fmt(W)} durante ${away.label}, mas nenhuma outra dupla do setor está livre — ajuste manualmente em Plantões.`);
+        out.messages.push(`${code(teamA)} está de plantão em ${fmt(W)} durante ${away.label}, mas nenhuma outra dupla do setor está livre — ajuste em Escala de plantão.`);
         continue;
       }
       const B = pick.team.id;
