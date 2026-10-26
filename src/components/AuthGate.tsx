@@ -1,12 +1,11 @@
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogIn, ShieldAlert, WifiOff } from "lucide-react";
+import { ShieldAlert, WifiOff } from "lucide-react";
 import { supabase } from "../helpers/supabase";
 import { subscribeCloudChanges } from "../helpers/cloud";
 import { APP_DATA_QUERY_KEY } from "../helpers/useAppData";
 import { Button } from "./Button";
-import { Input } from "./Input";
 import { CloudImportDialog } from "./CloudImportDialog";
 import styles from "./AuthGate.module.css";
 
@@ -112,29 +111,60 @@ const LoginForm = () => {
   };
 
   return (
-    <div className={styles.center}>
-      <form className={styles.card} onSubmit={submit}>
-        <div className={styles.brand}>
-          <img src="./logo.png" alt="" className={styles.brandIcon} />
-          <div>
-            <div className={styles.title}>Escala Técnica</div>
-            <div className={styles.sub}>Suporte · Backbone</div>
-          </div>
+    <div className={styles.split}>
+      <aside className={styles.hero} aria-hidden>
+        <svg className={styles.waves} viewBox="0 0 870 943" preserveAspectRatio="none">
+          <path d="M370 0 C 470 120, 520 200, 640 260 S 820 360, 870 378" />
+          <path d="M0 122 C 160 110, 260 220, 420 300 S 700 420, 870 528" />
+          <path d="M0 188 C 150 180, 260 270, 400 360 S 690 500, 870 610" />
+        </svg>
+        <div className={styles.rings}>
+          <span />
+          <span />
+          <span />
         </div>
-        <label className={styles.label} htmlFor="email">
-          E-mail
-        </label>
-        <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <label className={styles.label} htmlFor="password">
-          Senha
-        </label>
-        <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-        {error && <p className={styles.error}>{error}</p>}
-        <Button type="submit" disabled={loading} className={styles.submit}>
-          <LogIn size={16} /> {loading ? "Entrando..." : "Entrar"}
-        </Button>
-        <p className={styles.hint}>Use o mesmo e-mail e senha do sistema da frota.</p>
-      </form>
+        <img src="./logo-mark.png" alt="" className={styles.watermark} />
+        <div className={styles.heroContent}>
+          <div className={styles.heroBrand}>
+            <span className={styles.heroBadge}>
+              <img src="./logo-mark.png" alt="" />
+            </span>
+            <span>Nortetel</span>
+          </div>
+          <h1 className={styles.heroTitle}>Sua equipe, em escala.</h1>
+        </div>
+        <div className={styles.heroFoot}>Escala Técnica · Suporte e Backbone</div>
+      </aside>
+
+      <main className={styles.panel}>
+        <form className={styles.form} onSubmit={submit}>
+          <div className={styles.mobileBrand}>
+            <img src="./logo.png" alt="" /> Nortetel · Escala Técnica
+          </div>
+          <h2 className={styles.formTitle}>Entrar</h2>
+          <p className={styles.formSub}>Use o e-mail e a senha cadastrados pelo administrador.</p>
+          <label className={styles.flabel} htmlFor="email">
+            E-mail
+          </label>
+          <input id="email" className={styles.finput} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label className={styles.flabel} htmlFor="password">
+            Senha
+          </label>
+          <input
+            id="password"
+            className={styles.finput}
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && <p className={styles.ferror}>{error}</p>}
+          <button type="submit" disabled={loading} className={styles.fsubmit}>
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+      </main>
     </div>
   );
 };
