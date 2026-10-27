@@ -192,6 +192,7 @@ export default function SchedulePage() {
                             const cell = (
                               <DayCell
                                 status={view.status}
+                                label={view.status === "folga" && wd === 6 ? "DSR" : undefined}
                                 today={d.date === today}
                                 className={view.overrideId !== null ? styles.overridden : ""}
                                 onClick={() => setEditing(active ? null : { teamId: team.id, date: d.date })}
@@ -251,6 +252,9 @@ export default function SchedulePage() {
       </div>
 
       <div className={styles.legend}>
+        <span className={styles.legendItem}>
+          <DayCell status="folga" label="DSR" tabIndex={-1} className={styles.legendCell} /> DSR (domingo, descanso semanal remunerado)
+        </span>
         {(["trabalho", "plantao", "viagem", "folga", "folga_plantao", "feriado", "compensatoria", "desfalcada", "ausente", "sem_escala"] as const).map((s) => (
           <span key={s} className={styles.legendItem}>
             <DayCell status={s} tabIndex={-1} className={styles.legendCell} /> {labels.status[s]}

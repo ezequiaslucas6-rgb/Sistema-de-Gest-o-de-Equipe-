@@ -28,7 +28,8 @@ export const AlertActions = ({ alert, data, today, ignored, onToggleIgnore }: Pr
   // feriado: a regra sugere a dupla do plantão do fim de semana daquela semana
   const suggestedFor = (holidayId: number) => {
     const h = data.holidays.find((x) => x.id === holidayId);
-    if (!h) return new Set<number>();
+    // feriado na sexta: o plantão do fim de semana não pega (plantão é só sábado e domingo)
+    if (!h || scheduleEngine.weekdayIndex(h.date) === 4) return new Set<number>();
     const sat = holidayWeekend(h.date, data.motorConfig?.mondayRule ?? "seguinte");
     return new Set(data.onCallShifts.filter((s) => s.weekendStart === sat).map((s) => s.teamId));
   };

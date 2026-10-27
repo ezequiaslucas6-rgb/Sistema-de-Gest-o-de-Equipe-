@@ -59,8 +59,9 @@ O mesmo sistema também abre no navegador, sem instalar:
 - **Compensação do plantão:** 6x1 → sexta + sábado seguintes; 5x2 → quinta + sexta seguintes; folga em feriado passa
   para o próximo dia útil.
 - **Feriados:** folga geral coberta pela dupla de plantão; quem trabalha folga no próximo dia útil.
+- **Plantão é só sábado e domingo**; domingo é DSR (descanso semanal remunerado) e não conta como folga de compensação.
 - **Feriado em dia útil (motor):** a dupla do plantão do fim de semana daquela semana faz o feriado e folga no próximo
-  dia útil; feriado na segunda usa o fim de semana anterior (emenda) ou o seguinte, conforme a opção escolhida.
+  dia útil (feriado na **sexta** fica com outra dupla, fora do plantão e da semana de folga, para o plantão não começar na sexta); feriado na segunda usa o fim de semana anterior (emenda) ou o seguinte, conforme a opção escolhida.
 - **Diárias só para os destinos da lista** (padrão: Rondolândia, Fazenda Castanhal, Fazenda Peralta); cada viagem pode
   ser marcada como "gera diária: sim/não". **Viagem sobre um plantão** troca a dupla automaticamente com a próxima livre.
 - **Diárias:** cheia por pernoite, meia no dia do retorno e em viagem no mesmo dia acima do mínimo de horas (valores

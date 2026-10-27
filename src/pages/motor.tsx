@@ -304,11 +304,11 @@ export default function MotorPage() {
               Plantão: <b>sábado {data?.settings[0]?.onCallSaturday.replace("-", "–")}</b> e <b>domingo {data?.settings[0]?.onCallSunday.replace(/-/g, "–").replace(",", " e ")}</b> (sábado de manhã é expediente normal do 6x1).
             </li>
             <li>
-              Banco de horas: quem fez o plantão <b>folga sexta e sábado da semana seguinte</b>. O domingo já é folga garantida e não entra.
+              Banco de horas: quem fez o plantão <b>folga sexta e sábado da semana seguinte</b>. O domingo é DSR (descanso semanal remunerado) e não entra.
             </li>
             <li>
               <b>Feriado em dia de semana</b>: quem está de plantão no fim de semana daquela semana faz o feriado e <b>folga no próximo dia útil</b> (ex.: feriado na
-              segunda → folga na terça).
+              segunda → folga na terça). <b>Feriado na sexta</b> fica com outra dupla, porque o plantão é só sábado e domingo.
             </li>
             <li>Se a semana seguinte já for 5x2, a folga do plantão passa para quinta e sexta.</li>
             <li>Ninguém pega dois fins de semana seguidos. Dupla desfalcada troca com a próxima da fila, que devolve a vez depois.</li>

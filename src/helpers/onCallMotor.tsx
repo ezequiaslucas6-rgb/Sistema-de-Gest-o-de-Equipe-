@@ -196,6 +196,17 @@ export function runMotor(input: MotorInput): MotorResult {
     null;
 
   const holidays: MotorHoliday[] = [];
+  const holidayCount = new Map<number, number>();
+  // dupla fora do plantão do fim de semana e sem folga de compensação no dia (para feriado de sexta)
+  const freeForFriday = (sector: Sector, date: string, weekendTeam: number | null, prevTeam: number | null) => {
+    const busyComp = (id: number) =>
+      shifts.some((x) => x.teamId === id && x.compDates.includes(date)) ||
+      data.onCallShifts.some((x) => x.teamId === id && x.compDates.includes(date));
+    const ok = order[sector].filter((id) => teamById.get(id)?.sector === sector && id !== weekendTeam && !busyComp(id) && !blocker(id, [date]));
+    // evita também a dupla do plantão anterior (está na semana da folga de compensação)
+    const rest = ok.filter((id) => id !== prevTeam);
+    return (rest.length ? rest : ok).sort((a, b) => (holidayCount.get(a) ?? 0) - (holidayCount.get(b) ?? 0))[0];
+  };
   const lastDay = scheduleEngine.addDays(saturdays[saturdays.length - 1] ?? to, 1);
   for (const h of data.holidays) {
     if (!h.dayOff || h.date < from || h.date > lastDay) continue;
@@ -205,6 +216,15 @@ export function runMotor(input: MotorInput): MotorResult {
     const notes: string[] = [];
     for (const sector of labels.sectors) {
       let teamId = knownShift(sector, sat);
+      // plantão é só sábado e domingo: feriado na sexta fica com outra dupla (nem a do fim de semana, nem quem está de folga)
+      if (wd === 4) {
+        const alt = freeForFriday(sector, h.date, teamId, knownShift(sector, scheduleEngine.addDays(sat, -7)));
+        if (alt !== undefined) {
+          teamId = alt;
+        } else {
+          notes.push(`${labels.sectorShort[sector]}: nenhuma dupla livre na sexta além da do plantão`);
+        }
+      }
       if (teamId === null) {
         notes.push(`${labels.sectorShort[sector]} sem plantão definido no fim de semana ${scheduleEngine.formatDate(sat).slice(0, 5)}`);
         continue;
@@ -219,6 +239,7 @@ export function runMotor(input: MotorInput): MotorResult {
         }
       }
       teamIds.push(teamId);
+      holidayCount.set(teamId, (holidayCount.get(teamId) ?? 0) + 1);
     }
     let compDate: string | null = null;
     if (wd < 5) {
@@ -228,9 +249,10 @@ export function runMotor(input: MotorInput): MotorResult {
         for (const s of shifts.filter((x) => x.teamId === id)) {
           busy.add(s.saturday);
           busy.add(scheduleEngine.addDays(s.saturday, 1));
-          s.compDates.forEach((d) => busy.add(d));
         }
       }
+      // não empilha com a folga de compensação de outra dupla (derrubaria o mínimo do setor)
+      for (const s of shifts) s.compDates.forEach((d) => busy.add(d));
       let d = scheduleEngine.holidayCompDate(h.date, "suporte", data.patterns, data.holidays);
       for (let guard = 0; busy.has(d) && guard < 10; guard++) {
         d = scheduleEngine.holidayCompDate(d, "suporte", data.patterns, data.holidays);
