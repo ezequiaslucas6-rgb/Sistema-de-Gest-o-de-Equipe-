@@ -3,11 +3,13 @@ import type { ImportMapping, StockItem, StockTechnician } from "./stock";
 /** Uma tabela lida do arquivo: cabeçalho + linhas (cada aba vira uma tabela). */
 export interface SheetTable {
   sheet: string;
+  /** dono do estoque quando o arquivo não tem coluna de colaborador (ex.: "Almoxarifado 373" num relatório em PDF) */
+  owner?: string;
   headers: string[];
   rows: string[][];
 }
 
-export type Field = keyof ImportMapping;
+export type Field = Exclude<keyof ImportMapping, "owners">;
 
 export const FIELD_LABEL: Record<Field, string> = {
   technician: "Colaborador",
@@ -15,15 +17,17 @@ export const FIELD_LABEL: Record<Field, string> = {
   name: "Item / descrição",
   qty: "Quantidade (saldo)",
   unit: "Unidade",
+  category: "Tipo / categoria",
   min: "Estoque mínimo",
   max: "Estoque máximo",
 };
 
-export const DEFAULT_HEADERS: Required<ImportMapping> = {
+export const DEFAULT_HEADERS: Required<Omit<ImportMapping, "owners">> = {
   technician: "Colaborador",
   code: "Código",
   name: "Item",
   unit: "Unidade",
+  category: "Tipo",
   qty: "Quantidade",
   min: "Mínimo",
   max: "Máximo",
@@ -44,9 +48,10 @@ const HEADER_RULES: [Field, RegExp][] = [
   ["min", /\b(MIN|MINIMO|EST\.? MIN|ESTOQUE MIN)/],
   ["max", /\b(MAX|MAXIMO|EST\.? MAX|ESTOQUE MAX)/],
   ["technician", /\b(COLABORADOR|TECNICO|FUNCIONARIO|RESPONSAVEL|PORTADOR|DEPOSITO|ALMOXARIFADO DO|USUARIO)\b/],
-  ["code", /\b(COD|CODIGO|COD\. ?PRODUTO|SKU|REF|REFERENCIA|PATRIMONIO)\b/],
+  ["code", /\b(COD|CODIGO|COD\. ?PRODUTO|SKU|REF|REFERENCIA|PATRIMONIO)\b|^ID( DO)? PRODUTO$|^ID$/],
   ["qty", /\b(QTD|QTDE|QUANT|QUANTIDADE|SALDO|ESTOQUE|ESTOQUE ATUAL|DISPONIVEL)\b/],
   ["unit", /^(UN|UND|UNID|UNIDADE|UM|U\.M\.|MEDIDA)\b/],
+  ["category", /^(TIPO|CATEGORIA|GRUPO|CLASSE|FAMILIA)\b/],
   ["name", /\b(ITEM|DESCRICAO|PRODUTO|MATERIAL|NOME DO PRODUTO|EQUIPAMENTO)\b/],
 ];
 
@@ -142,9 +147,93 @@ function toTable(sheet: string, grid: string[][]): SheetTable | null {
   return { sheet, headers, rows };
 }
 
+type PdfText = { str: string; x: number; y: number; size: number };
+
+/**
+ * Relatório em PDF no formato "ficha" (como o Relatório de Produtos do sistema de estoque): uma linha de rótulos em letra
+ * pequena ("ID Produto", "Produto", "Saldo"…) com os valores logo abaixo. Cada vez que o primeiro rótulo se repete começa
+ * um registro novo. O almoxarifado consultado ("id_almox = 373") vira o dono do estoque.
+ */
+async function readPdf(buf: ArrayBuffer, fileName: string): Promise<SheetTable[]> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  // roda o leitor na própria página (sem Worker separado), o que funciona também no programa instalado
+  const g = globalThis as { pdfjsWorker?: unknown };
+  if (!g.pdfjsWorker) g.pdfjsWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), verbosity: 0, isEvalSupported: false }).promise;
+  const rows: PdfText[][] = [];
+  let fullText = "";
+  for (let p = 1; p <= doc.numPages; p++) {
+    const content = await (await doc.getPage(p)).getTextContent();
+    const items: PdfText[] = [];
+    for (const it of content.items) {
+      if (!("str" in it) || !it.str.trim()) continue;
+      items.push({ str: it.str.trim(), x: it.transform[4], y: it.transform[5], size: Math.abs(it.transform[3]) || it.height });
+      fullText += it.str + "\n";
+    }
+    items.sort((a, b) => b.y - a.y || a.x - b.x);
+    const pageRows: PdfText[][] = [];
+    for (const it of items) {
+      const row = pageRows.find((r) => Math.abs(r[0].y - it.y) <= 2 && Math.abs(r[0].size - it.size) < 0.5);
+      if (row) row.push(it);
+      else pageRows.push([it]);
+    }
+    pageRows.forEach((r) => r.sort((a, b) => a.x - b.x));
+    rows.push(...pageRows);
+  }
+  if (!rows.length) throw new Error("O PDF não tem texto (é uma imagem escaneada). Exporte o relatório em Excel ou CSV.");
+  // rótulo = letra menor que o texto mais comum
+  const sizes = new Map<number, number>();
+  rows.flat().forEach((t) => sizes.set(Math.round(t.size), (sizes.get(Math.round(t.size)) ?? 0) + 1));
+  const bodySize = [...sizes].sort((a, b) => b[1] - a[1])[0][0];
+  const isLabel = (r: PdfText[]) => r.every((t) => t.size < bodySize * 0.8);
+
+  const headers: string[] = [];
+  const records: Record<string, string>[] = [];
+  let current: Record<string, string> | null = null;
+  let keyLabel: string | null = null;
+  let labels: PdfText[] | null = null;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (isLabel(r)) {
+      const next = rows[i + 1];
+      // rótulo sem valores embaixo (ex.: "Parâmetros da consulta") não é campo
+      if (!next || isLabel(next) || r.length < 1) {
+        labels = null;
+        continue;
+      }
+      if (!keyLabel && r.length >= 2) keyLabel = r[0].str;
+      if (r[0].str === keyLabel) {
+        if (current) records.push(current);
+        current = {};
+      }
+      labels = r;
+      for (const l of r) if (!headers.includes(l.str)) headers.push(l.str);
+      continue;
+    }
+    if (!labels || !current) continue;
+    for (const v of r) {
+      const label = [...labels].reverse().find((l) => l.x <= v.x + 3) ?? labels[0];
+      current[label.str] = current[label.str] ? `${current[label.str]} ${v.str}` : v.str;
+    }
+    labels = null;
+  }
+  if (current) records.push(current);
+  if (!records.length || headers.length < 2) throw new Error("Não reconheci o formato deste PDF. Exporte o relatório em Excel ou CSV.");
+  const almox = /id_almox\s*=\s*(\d+)/i.exec(fullText)?.[1];
+  return [
+    {
+      sheet: fileName,
+      owner: almox ? `Almoxarifado ${almox}` : undefined,
+      headers,
+      rows: records.map((rec) => headers.map((h) => rec[h] ?? "")),
+    },
+  ];
+}
+
 export async function readSpreadsheet(file: File): Promise<SheetTable[]> {
   const buf = await file.arrayBuffer();
   const ext = file.name.toLowerCase().split(".").pop() ?? "";
+  if (ext === "pdf") return readPdf(buf, file.name);
   if (ext === "xls") throw new Error("Arquivo .xls (Excel antigo): abra no Excel e salve como .xlsx ou .csv.");
   if (ext === "xlsx" || ext === "xlsm") {
     const ExcelJS = (await import("exceljs")).default;
@@ -170,7 +259,7 @@ export function guessMapping(headers: string[], previous?: ImportMapping | null)
   const m: ImportMapping = {};
   // o mesmo layout da última importação vence a adivinhação
   if (previous) {
-    for (const f of Object.keys(previous) as Field[]) {
+    for (const f of Object.keys(previous).filter((k) => k !== "owners") as Field[]) {
       const h = previous[f];
       if (h && headers.includes(h)) m[f] = h;
     }
@@ -222,6 +311,7 @@ export interface ExportRow {
   code: string;
   name: string;
   unit: string;
+  category?: string | null;
   qty: number;
   min: number | null;
   max: number | null;
@@ -232,8 +322,8 @@ export interface ExportRow {
 export async function downloadSpreadsheet(fileBase: string, rows: ExportRow[], mapping: ImportMapping | null, format: "xlsx" | "csv") {
   const h = { ...DEFAULT_HEADERS, ...(mapping ?? {}) };
   const extraCols = [...new Set(rows.flatMap((r) => Object.keys(r.extra ?? {})))];
-  const headers = [h.technician, h.code, h.name, h.unit, h.qty, h.min, h.max, ...extraCols];
-  const body = rows.map((r) => [r.technician, r.code, r.name, r.unit, r.qty, r.min ?? "", r.max ?? "", ...extraCols.map((c) => r.extra?.[c] ?? "")]);
+  const headers = [h.technician, h.code, h.name, h.unit, h.category, h.qty, h.min, h.max, ...extraCols];
+  const body = rows.map((r) => [r.technician, r.code, r.name, r.unit, r.category ?? "", r.qty, r.min ?? "", r.max ?? "", ...extraCols.map((c) => r.extra?.[c] ?? "")]);
   let blob: Blob;
   if (format === "csv") {
     const esc = (v: string | number) => {

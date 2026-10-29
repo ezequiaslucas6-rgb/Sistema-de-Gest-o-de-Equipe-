@@ -72,8 +72,11 @@ export interface ImportMapping {
   name?: string;
   qty?: string;
   unit?: string;
+  category?: string;
   min?: string;
   max?: string;
+  /** dono do estoque reconhecido em importações anteriores (ex.: "Almoxarifado 373" → id do técnico) */
+  owners?: Record<string, number>;
 }
 
 export interface StockImport {
@@ -349,7 +352,7 @@ export interface ImportInput {
   fileName: string;
   mapping: ImportMapping;
   /** itens que ainda não existem no cadastro; `key` liga às linhas */
-  newItems: { key: string; code: string | null; name: string; unit: string; sector: StockSector; minQty: number; maxQty: number | null }[];
+  newItems: { key: string; code: string | null; name: string; unit: string; category: string | null; sector: StockSector; minQty: number; maxQty: number | null }[];
   /** mínimo/máximo vindos da planilha para itens já cadastrados */
   itemLimits: { itemId: number; minQty: number | null; maxQty: number | null }[];
   rows: { technicianId: number; itemId?: number; newItemKey?: string; qty: number }[];
@@ -363,7 +366,7 @@ async function importBalances(input: ImportInput): Promise<{ technicians: number
     const created = must(
       await supabase
         .from("escala_stock_items")
-        .insert(itemRow({ ...it, category: null, kitQty: 0, active: true }))
+        .insert(itemRow({ ...it, kitQty: 0, active: true }))
         .select("id")
         .single(),
     ) as { id: number };

@@ -27,9 +27,9 @@ interface Props {
 }
 
 const NONE = "__none";
-const FIELDS: Field[] = ["technician", "code", "name", "qty", "unit", "min", "max"];
+const FIELDS: Field[] = ["technician", "code", "name", "qty", "unit", "category", "min", "max"];
 
-type ParsedRow = { group: string; code: string; name: string; unit: string; qty: number; min: number | null; max: number | null };
+type ParsedRow = { group: string; code: string; name: string; unit: string; category: string; qty: number; min: number | null; max: number | null };
 
 /** Importa o saldo de cada colaborador a partir da planilha do outro sistema (CSV ou Excel). */
 export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
@@ -45,6 +45,12 @@ export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
   const [reading, setReading] = useState(false);
 
   const lastMapping = data.imports.find((i) => i.mapping)?.mapping ?? null;
+  // "Almoxarifado 373" → técnico, aprendido nas importações anteriores (a mais recente vale)
+  const knownOwners = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const imp of [...data.imports].reverse()) Object.assign(m, imp.mapping?.owners ?? {});
+    return m;
+  }, [data.imports]);
   const headers = tables[0]?.headers ?? [];
 
   const reset = () => {
@@ -80,18 +86,28 @@ export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
       // outras abas com cabeçalhos diferentes: adivinha a partir do que foi escolhido na primeira
       const m = t === tables[0] ? mapping : guessMapping(t.headers, mapping);
       const col = (f: Field) => (m[f] ? t.headers.indexOf(m[f]!) : -1);
-      const ci = { technician: col("technician"), code: col("code"), name: col("name"), qty: col("qty"), unit: col("unit"), min: col("min"), max: col("max") };
+      const ci = {
+        technician: col("technician"),
+        code: col("code"),
+        name: col("name"),
+        qty: col("qty"),
+        unit: col("unit"),
+        category: col("category"),
+        min: col("min"),
+        max: col("max"),
+      };
       for (const r of t.rows) {
         const code = ci.code >= 0 ? r[ci.code].trim() : "";
         const name = ci.name >= 0 ? r[ci.name].trim() : "";
         if (!code && !name) continue;
         if (/^TOTA(L|IS)\b/.test(norm(name || code))) continue;
-        const group = ci.technician >= 0 ? r[ci.technician].trim() : tables.length > 1 ? t.sheet : "";
+        const group = ci.technician >= 0 ? r[ci.technician].trim() : (t.owner ?? (tables.length > 1 ? t.sheet : ""));
         out.push({
           group,
           code,
           name: name || code,
           unit: ci.unit >= 0 ? r[ci.unit].trim() : "",
+          category: ci.category >= 0 ? r[ci.category].trim() : "",
           qty: ci.qty >= 0 ? (parseNumber(r[ci.qty]) ?? 0) : 0,
           min: ci.min >= 0 ? parseNumber(r[ci.min]) : null,
           max: ci.max >= 0 ? parseNumber(r[ci.max]) : null,
@@ -102,15 +118,16 @@ export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
   }, [tables, mapping]);
 
   const groups = useMemo(() => {
-    const map = new Map<string, { key: string; rows: number; total: number; auto: number | null }>();
+    const map = new Map<string, { key: string; items: Set<string>; auto: number | null }>();
     for (const r of parsed) {
-      const g = map.get(r.group) ?? { key: r.group, rows: 0, total: 0, auto: r.group ? (matchTechnician(r.group, data.technicians)?.id ?? null) : null };
-      g.rows++;
-      g.total += r.qty;
+      const known = knownOwners[r.group];
+      const auto = r.group ? (matchTechnician(r.group, data.technicians)?.id ?? (known && data.technicians.some((t) => t.id === known) ? known : null)) : null;
+      const g = map.get(r.group) ?? { key: r.group, items: new Set<string>(), auto };
+      g.items.add(norm(r.code) || norm(r.name));
       map.set(r.group, g);
     }
-    return [...map.values()];
-  }, [parsed, data.technicians]);
+    return [...map.values()].map((g) => ({ key: g.key, rows: g.items.size, auto: g.auto }));
+  }, [parsed, data.technicians, knownOwners]);
 
   const techOf = (group: string): number | null => {
     const o = techOverride[group];
@@ -125,7 +142,10 @@ export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
   };
 
   const plan = useMemo(() => {
-    const newItems = new Map<string, { key: string; code: string | null; name: string; unit: string; sectors: Set<StockSector>; minQty: number; maxQty: number | null }>();
+    const newItems = new Map<
+      string,
+      { key: string; code: string | null; name: string; unit: string; category: string | null; sectors: Set<StockSector>; minQty: number; maxQty: number | null }
+    >();
     const limits = new Map<number, { itemId: number; minQty: number | null; maxQty: number | null }>();
     const rows: { technicianId: number; itemId?: number; newItemKey?: string; qty: number }[] = [];
     let noTech = 0;
@@ -147,7 +167,16 @@ export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
         continue;
       }
       const key = norm(r.code) || norm(r.name);
-      const ni = newItems.get(key) ?? { key, code: r.code || null, name: r.name, unit: r.unit || "un", sectors: new Set<StockSector>(), minQty: r.min ?? 0, maxQty: r.max };
+      const ni = newItems.get(key) ?? {
+        key,
+        code: r.code || null,
+        name: r.name,
+        unit: r.unit || "un",
+        category: r.category || null,
+        sectors: new Set<StockSector>(),
+        minQty: r.min ?? 0,
+        maxQty: r.max,
+      };
       ni.sectors.add(sectorOfTech(technicianId));
       newItems.set(key, ni);
       rows.push({ technicianId, newItemKey: key, qty: r.qty });
@@ -166,8 +195,13 @@ export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
   const missingCols = (["qty"] as Field[]).filter((f) => !mapping[f]).concat(!mapping.code && !mapping.name ? (["name"] as Field[]) : []);
 
   const submit = () => {
+    const owners: Record<string, number> = { ...knownOwners };
+    for (const g of groups) {
+      const tech = techOf(g.key);
+      if (g.key && tech != null) owners[g.key] = tech;
+    }
     importBalances.mutate(
-      { fileName, mapping, newItems: plan.newItems, itemLimits: plan.limits, rows: plan.rows, replace },
+      { fileName, mapping: { ...mapping, owners }, newItems: plan.newItems, itemLimits: plan.limits, rows: plan.rows, replace },
       {
         onSuccess: (r) => {
           toast.success(`Estoque importado: ${r.technicians} colaborador(es), ${r.rows} saldo(s)${r.created ? `, ${r.created} item(ns) novo(s)` : ""}.`);
@@ -203,11 +237,11 @@ export const StockImportDialog = ({ open, onOpenChange, data }: Props) => {
         <DialogHeader>
           <DialogTitle>Importar estoque dos colaboradores</DialogTitle>
           <DialogDescription>
-            Planilha exportada do outro sistema (.xlsx ou .csv) com o saldo de cada colaborador. Uma coluna com o nome do colaborador, ou uma aba
-            por colaborador.
+            Relatório do outro sistema em PDF (Relatório de Produtos do almoxarifado do colaborador) ou planilha .xlsx/.csv com o saldo. O
+            almoxarifado de cada colaborador fica gravado: na próxima importação ele é reconhecido sozinho.
           </DialogDescription>
         </DialogHeader>
-        <input ref={fileRef} type="file" accept=".xlsx,.xlsm,.csv,.txt" hidden onChange={(e) => void pick(e.target.files?.[0])} />
+        <input ref={fileRef} type="file" accept=".xlsx,.xlsm,.csv,.txt,.pdf" hidden onChange={(e) => void pick(e.target.files?.[0])} />
 
         <div className={styles.body}>
           {!tables.length ? (
