@@ -233,7 +233,10 @@ async function readPdf(buf: ArrayBuffer, fileName: string): Promise<SheetTable[]
 export async function readSpreadsheet(file: File): Promise<SheetTable[]> {
   const buf = await file.arrayBuffer();
   const ext = file.name.toLowerCase().split(".").pop() ?? "";
-  if (ext === "pdf") return readPdf(buf, file.name);
+  const head = new Uint8Array(buf.slice(0, 5));
+  if (ext === "pdf" || String.fromCharCode(...head) === "%PDF-") return readPdf(buf, file.name);
+  // .xlsx é um zip ("PK"), mesmo com outra extensão
+  if (head[0] === 0x50 && head[1] === 0x4b && ext !== "xlsx" && ext !== "xlsm") return readSpreadsheet(new File([buf], `${file.name}.xlsx`));
   if (ext === "xls") throw new Error("Arquivo .xls (Excel antigo): abra no Excel e salve como .xlsx ou .csv.");
   if (ext === "xlsx" || ext === "xlsm") {
     const ExcelJS = (await import("exceljs")).default;
@@ -251,7 +254,10 @@ export async function readSpreadsheet(file: File): Promise<SheetTable[]> {
     });
     return tables;
   }
-  const t = toTable(file.name, parseCsv(decode(buf)));
+  const text = decode(buf);
+  const weird = (text.slice(0, 4000).match(/[\u0000-\u0008\u000e-\u001f\ufffd]/g) ?? []).length;
+  if (weird > 20) throw new Error("Formato de arquivo não reconhecido. Use o relatório em PDF, Excel (.xlsx) ou CSV.");
+  const t = toTable(file.name, parseCsv(text));
   return t && t.rows.length ? [t] : [];
 }
 

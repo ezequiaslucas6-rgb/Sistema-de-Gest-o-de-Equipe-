@@ -4,6 +4,7 @@ import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, Siren, Party
 import { useProfile } from "../helpers/profile";
 import { ThemeModeSwitch } from "./ThemeModeSwitch";
 import { DatabaseMenu } from "./DatabaseMenu";
+import { UpdateBanner } from "./UpdateBanner";
 import styles from "./AppShell.module.css";
 
 const NAV = [
@@ -55,7 +56,10 @@ export const AppShell = ({ children, className }: { children: ReactNode; classNa
           <DatabaseMenu className={styles.theme} />
         </div>
       </aside>
-      <main className={styles.main}>{children}</main>
+      <main className={styles.main}>
+        <UpdateBanner />
+        {children}
+      </main>
     </div>
   );
 };

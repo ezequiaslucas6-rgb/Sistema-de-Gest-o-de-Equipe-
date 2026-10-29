@@ -1,0 +1,29 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+  padding: var(--spacing-2) var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--card));
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-decoration: none;
+}
