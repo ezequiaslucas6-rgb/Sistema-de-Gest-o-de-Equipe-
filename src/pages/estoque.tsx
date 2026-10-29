@@ -11,6 +11,8 @@ import { ToggleGroup, ToggleGroupItem } from "../components/ToggleGroup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../components/Dialog";
 import { StockImportDialog } from "../components/StockImportDialog";
+import { StockWeekPanel } from "../components/StockWeekPanel";
+import { StockServicesPanel } from "../components/StockServicesPanel";
 import { scheduleEngine } from "../helpers/scheduleEngine";
 import { useProfile } from "../helpers/profile";
 import { toast } from "../helpers/toast";
@@ -36,7 +38,7 @@ import styles from "./estoque.module.css";
 export const DEFAULT_CHECKER = "JOÃO BATISTA DECARLI JUNIOR";
 
 type Sector = "suporte" | "infraestrutura";
-type Tab = "colaboradores" | "conferencias" | "reposicao" | "itens" | "importacoes";
+type Tab = "colaboradores" | "semana" | "conferencias" | "reposicao" | "servicos" | "itens" | "importacoes";
 
 type LineForm = { itemId: number; expected: string; counted: string; note: string };
 type CountForm = { id?: number; technicianId: string; date: string; checker: string; notes: string; lines: LineForm[]; status: CountStatus; updateBalances: boolean };
@@ -473,8 +475,10 @@ export default function StockPage() {
         {(
           [
             ["colaboradores", "Colaboradores"],
+            ["semana", "Agenda e abastecimento"],
             ["conferencias", "Conferências"],
             ["reposicao", `Reposição${restockGroups.length ? ` (${restockGroups.length})` : ""}`],
+            ["servicos", "Fluxo de serviço"],
             ["itens", "Itens e mín./máx."],
             ["importacoes", "Importações"],
           ] as [Tab, string][]
@@ -557,6 +561,9 @@ export default function StockPage() {
           </div>
         </section>
       )}
+
+      {tab === "semana" && data && <StockWeekPanel data={data} sector={sector} query={query} />}
+      {tab === "servicos" && data && <StockServicesPanel data={data} sector={sector} />}
 
       {tab === "conferencias" && data && (
         <section className={styles.tableWrap}>

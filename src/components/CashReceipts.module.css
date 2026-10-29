@@ -1,0 +1,78 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.empty,
+.meta {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.list li:first-child {
+  border-top: none;
+}
+
+.info {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.micro {
+  font-family: var(--font-family-monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.pick {
+  justify-content: flex-start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-2);
+}

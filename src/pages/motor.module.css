@@ -557,3 +557,9 @@
   color: var(--primary);
   flex-shrink: 0;
 }
+
+.headActions {
+  display: flex;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}

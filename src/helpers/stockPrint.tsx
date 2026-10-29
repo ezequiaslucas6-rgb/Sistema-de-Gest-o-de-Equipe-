@@ -109,3 +109,28 @@ export function restockReport(o: {
     .join("");
   return `${header(o.title)}${body || "<p>Nenhum colaborador abaixo do mínimo ou acima do máximo.</p>"}`;
 }
+
+/** Ordem de abastecimento da semana: o que separar para cada colaborador. */
+export function supplyReport(o: {
+  title: string;
+  week: string;
+  groups: { technician: string; team: string; countDay: string; services: string; lines: { code: string | null; name: string; unit: string; need: number; balance: number; send: number }[] }[];
+}) {
+  const body = o.groups
+    .map(
+      (g) => `<h2>${esc(g.technician)} <span style="font-weight:400;color:#555">· ${esc(g.team || "sem dupla")} · conferência ${esc(g.countDay)}</span></h2>
+      <p class="meta" style="margin:0 0 2px">Previsão da semana: ${esc(g.services || "—")}</p>
+      <table><thead><tr><th>Código</th><th>Item</th><th>Un</th><th class="r">Consumo previsto</th><th class="r">Saldo atual</th><th class="r">Enviar</th><th class="c">Separado</th></tr></thead><tbody>${
+        g.lines
+          .filter((l) => l.send > 0)
+          .map(
+            (l) =>
+              `<tr><td>${esc(l.code ?? "")}</td><td>${esc(l.name)}</td><td>${esc(l.unit)}</td><td class="r">${qty(l.need)}</td><td class="r">${qty(l.balance)}</td><td class="r"><b>${qty(l.send)}</b></td><td class="c">☐</td></tr>`,
+          )
+          .join("") || '<tr><td colspan="7">Nada a enviar.</td></tr>'
+      }</tbody></table>`,
+    )
+    .join("");
+  return `${header(o.title)}<p class="meta">Semana de <b>${esc(o.week)}</b></p>${body}
+    <div class="sign"><div>Almoxarifado</div><div>Recebido por</div></div>`;
+}

@@ -4,7 +4,7 @@
 
 .addForm {
   display: grid;
-  grid-template-columns: 1.3fr 1.3fr 1.4fr auto;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   gap: var(--spacing-3);
   align-items: end;
   background: var(--card);
@@ -93,4 +93,27 @@
   .addForm {
     grid-template-columns: 1fr;
   }
+}
+
+.pwdBox {
+  position: fixed;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  width: min(26rem, calc(100vw - 32px));
+  z-index: var(--z-overlay);
+  background: var(--popup);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.25);
+  padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.pwdActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
 }

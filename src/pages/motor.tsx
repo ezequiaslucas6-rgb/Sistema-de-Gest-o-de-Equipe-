@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { AlertTriangle, ArrowDown, ArrowUp, CalendarCheck, CheckCircle2, Cpu, MousePointerClick, PartyPopper, Repeat, Sparkles, Star } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, CalendarCheck, Printer, CheckCircle2, Cpu, MousePointerClick, PartyPopper, Repeat, Sparkles, Star } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { OnCallEditor } from "../components/OnCallEditor";
+import { OnCallMonthDialog } from "../components/OnCallMonthDialog";
 import { Button } from "../components/Button";
 import { Skeleton } from "../components/Skeleton";
 import { Switch } from "../components/Switch";
@@ -33,6 +34,7 @@ export default function MotorPage() {
   const [confirm, setConfirm] = useState(false);
   const [tab, setTab] = useState<"editar" | "gerar">("editar");
   const [weeks, setWeeks] = useState(12);
+  const [printOpen, setPrintOpen] = useState(false);
 
   // padrões: ordem por código, fim = véspera do 5x2, abre quem já está de plantão no primeiro fim de semana
   useEffect(() => {
@@ -164,12 +166,19 @@ export default function MotorPage() {
               <Sparkles size={16} /> Aplicar na escala
             </Button>
           ) : (
-            <Button className={styles.gradBtn} onClick={() => setTab("gerar")}>
-              <Cpu size={16} /> Gerar rodízio automático
-            </Button>
+            <div className={styles.headActions}>
+              <Button variant="outline" onClick={() => setPrintOpen(true)} disabled={!data}>
+                <Printer size={16} /> Imprimir / PDF do mês
+              </Button>
+              <Button className={styles.gradBtn} onClick={() => setTab("gerar")}>
+                <Cpu size={16} /> Gerar rodízio automático
+              </Button>
+            </div>
           )
         }
       />
+
+      {data && <OnCallMonthDialog data={data} open={printOpen} onOpenChange={setPrintOpen} />}
 
       <div className={styles.tabs} role="tablist">
         <button role="tab" aria-selected={tab === "editar"} className={tab === "editar" ? styles.tabOn : ""} onClick={() => setTab("editar")}>

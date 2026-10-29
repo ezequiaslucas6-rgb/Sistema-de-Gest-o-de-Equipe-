@@ -35,9 +35,10 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     setAccess("verificando");
     supabase.rpc("escala_my_profile").then(({ data, error }) => {
       if (error && /fetch|network/i.test(error.message)) return setAccess("offline");
-      const p = data as { role?: string; name?: string | null } | null;
-      if (error || !p || (p.role !== "supervisor" && p.role !== "almoxarifado")) return setAccess("negado");
-      setProfile({ role: p.role, name: p.name ?? null, email: userEmail });
+      const p = data as { role?: string; name?: string | null; technicianId?: number | null } | null;
+      if (error || !p || (p.role !== "supervisor" && p.role !== "almoxarifado" && p.role !== "tecnico")) return setAccess("negado");
+      if (p.role === "tecnico" && !p.technicianId) return setAccess("negado");
+      setProfile({ role: p.role, name: p.name ?? null, email: userEmail, technicianId: p.technicianId ?? null });
       setAccess("liberado");
     });
   }, [userEmail, retry]);
@@ -116,6 +117,8 @@ const LoginForm = () => {
         return setError(
           /registered|exists/i.test(error.message)
             ? "Esse e-mail já tem senha. Use Entrar."
+            : /rate limit|too many/i.test(error.message)
+              ? "Muitas tentativas agora. Peça ao supervisor para definir sua senha em Acessos."
             : /fetch|network/i.test(error.message)
               ? "Sem conexão com a internet."
               : /disabled|not allowed/i.test(error.message)
@@ -125,8 +128,12 @@ const LoginForm = () => {
       }
       if (!data.session) {
         if (data.user && data.user.identities?.length === 0) return setError("Esse e-mail já tem senha. Use Entrar.");
-        setFirstAccess(false);
-        setInfo("Enviamos um e-mail de confirmação. Abra o link recebido e depois entre com a senha criada.");
+        // e-mail liberado no sistema não precisa de confirmação: já entra
+        const login = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+        if (login.error) {
+          setFirstAccess(false);
+          setInfo("Conta criada. Se não entrar, peça ao supervisor para liberar seu e-mail e definir a senha em Acessos.");
+        }
       }
       return;
     }
@@ -177,7 +184,7 @@ const LoginForm = () => {
           </div>
           <h2 className={styles.formTitle}>{firstAccess ? "Primeiro acesso" : "Entrar"}</h2>
           <p className={styles.formSub}>
-            {firstAccess ? "Crie sua senha usando o e-mail liberado pelo supervisor." : "Use o e-mail e a senha cadastrados pelo administrador."}
+            {firstAccess ? "Crie sua senha usando o e-mail liberado pelo supervisor." : "Use o e-mail e a senha definidos pelo supervisor."}
           </p>
           <label className={styles.flabel} htmlFor="email">
             E-mail

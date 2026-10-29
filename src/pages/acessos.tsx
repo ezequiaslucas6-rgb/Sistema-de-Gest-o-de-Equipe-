@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2, UserPlus } from "lucide-react";
+import { KeyRound, Trash2, UserPlus } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
@@ -10,14 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { supabase } from "../helpers/supabase";
 import { useProfile, type Role } from "../helpers/profile";
 import { toast } from "../helpers/toast";
+import { useAppData } from "../helpers/useAppData";
 import styles from "./acessos.module.css";
 
-type User = { email: string; name: string | null; role: Role; created_at: string };
+type User = { email: string; name: string | null; role: Role; technician_id: number | null; created_at: string };
 
 const ROLE_LABEL: Record<Role, string> = {
   supervisor: "Supervisor (acesso total)",
   almoxarifado: "Supervisor de almoxarifado (só estoque)",
+  tecnico: "Técnico (app: conferência, material e caixa)",
 };
+const ROLES: Role[] = ["tecnico", "almoxarifado", "supervisor"];
 
 const KEY = ["escala_usuarios"] as const;
 
@@ -25,12 +28,27 @@ const KEY = ["escala_usuarios"] as const;
 export default function AccessPage() {
   const me = useProfile();
   const qc = useQueryClient();
-  const [form, setForm] = useState({ email: "", name: "", role: "almoxarifado" as Role });
+  const { data: app } = useAppData();
+  const [form, setForm] = useState({ email: "", name: "", role: "tecnico" as Role, technicianId: "", password: "" });
+  const [pwdFor, setPwdFor] = useState<string | null>(null);
+  const [pwd, setPwd] = useState("");
+
+  /** Cria a conta (ou troca a senha) direto, sem e-mail de confirmação. */
+  const setPassword = async (email: string, password: string) => {
+    const { data, error } = await supabase.functions.invoke("escala-usuarios", { body: { email, password } });
+    const msg = (data as { error?: string } | null)?.error;
+    if (error || msg) {
+      let detail = msg;
+      if (!detail && error && "context" in error) detail = ((await (error as { context: Response }).context.json().catch(() => null)) as { error?: string } | null)?.error;
+      throw new Error(detail ?? error?.message ?? "Não foi possível definir a senha.");
+    }
+  };
+  const techName = (id: number | null) => app?.technicians.find((t) => t.id === id)?.name ?? "—";
 
   const { data, error } = useQuery({
     queryKey: KEY,
     queryFn: async () => {
-      const { data, error } = await supabase.from("escala_usuarios").select("email, name, role, created_at").order("role").order("email");
+      const { data, error } = await supabase.from("escala_usuarios").select("email, name, role, technician_id, created_at").order("role").order("email");
       if (error) throw new Error(error.message);
       return data as User[];
     },
@@ -52,10 +70,30 @@ export default function AccessPage() {
       toast.error("Informe um e-mail válido.");
       return;
     }
-    run.mutate(() => supabase.from("escala_usuarios").insert({ email, name: form.name.trim() || null, role: form.role }), {
-      onSuccess: () => {
+    if (form.role === "tecnico" && !form.technicianId) {
+      toast.error("Escolha qual técnico é este acesso.");
+      return;
+    }
+    const technicianId = form.role === "tecnico" ? Number(form.technicianId) : null;
+    const name = form.name.trim() || (technicianId ? techName(technicianId) : "") || null;
+    if (form.password && form.password.length < 6) {
+      toast.error("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+    run.mutate(() => supabase.from("escala_usuarios").insert({ email, name, role: form.role, technician_id: technicianId }), {
+      onSuccess: async () => {
+        if (form.password) {
+          try {
+            await setPassword(email, form.password);
+            toast.success(`Acesso liberado para ${email}. Já pode entrar com a senha definida.`);
+          } catch (err) {
+            toast.error(`Acesso liberado, mas a senha não foi salva: ${err instanceof Error ? err.message : String(err)}`);
+          }
+          setForm({ email: "", name: "", role: "tecnico", technicianId: "", password: "" });
+          return;
+        }
         toast.success(`Acesso liberado para ${email}`);
-        setForm({ email: "", name: "", role: "almoxarifado" });
+        setForm({ email: "", name: "", role: "tecnico", technicianId: "", password: "" });
       },
     });
   };
@@ -87,17 +125,42 @@ export default function AccessPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="almoxarifado">{ROLE_LABEL.almoxarifado}</SelectItem>
-              <SelectItem value="supervisor">{ROLE_LABEL.supervisor}</SelectItem>
+              {ROLES.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {ROLE_LABEL[r]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+        </div>
+        {form.role === "tecnico" && (
+          <div>
+            <label className={styles.label}>Técnico</label>
+            <Select value={form.technicianId} onValueChange={(v) => setForm({ ...form, technicianId: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Escolha" />
+              </SelectTrigger>
+              <SelectContent>
+                {(app?.technicians ?? []).map((t) => (
+                  <SelectItem key={t.id} value={String(t.id)}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div>
+          <label className={styles.label}>Senha inicial</label>
+          <Input type="text" autoComplete="off" value={form.password} placeholder="mín. 6 caracteres" onChange={(e) => setForm({ ...form, password: e.target.value })} />
         </div>
         <Button type="submit" disabled={run.isPending}>
           <UserPlus size={15} /> Liberar acesso
         </Button>
       </form>
       <p className={styles.hint}>
-        Depois de liberado, a pessoa abre o sistema, clica em <b>Primeiro acesso</b> e cria a própria senha com esse e-mail.
+        Sem confirmação por e-mail: defina a senha inicial aqui e entregue para a pessoa (ou ela usa <b>Primeiro acesso</b> e cria a própria). No
+        celular, abra o site e use “Adicionar à tela inicial” para instalar o app.
       </p>
 
       {error && <p className={styles.error}>{error instanceof Error ? error.message : String(error)}</p>}
@@ -111,6 +174,7 @@ export default function AccessPage() {
                 <th>E-mail</th>
                 <th>Nome</th>
                 <th>Perfil</th>
+                <th>Técnico</th>
                 <th />
               </tr>
             </thead>
@@ -143,12 +207,39 @@ export default function AccessPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="almoxarifado">{ROLE_LABEL.almoxarifado}</SelectItem>
-                          <SelectItem value="supervisor">{ROLE_LABEL.supervisor}</SelectItem>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {ROLE_LABEL[r]}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </td>
+                    <td>
+                      {u.role === "tecnico" ? (
+                        <Select
+                          value={u.technician_id ? String(u.technician_id) : ""}
+                          onValueChange={(v) => run.mutate(() => supabase.from("escala_usuarios").update({ technician_id: Number(v) }).eq("email", u.email))}
+                        >
+                          <SelectTrigger className={styles.inline}>
+                            <SelectValue placeholder="Escolha" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(app?.technicians ?? []).map((t) => (
+                              <SelectItem key={t.id} value={String(t.id)}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className={styles.meta}>—</span>
+                      )}
+                    </td>
                     <td className={styles.r}>
+                      <Button size="sm" variant="ghost" onClick={() => (setPwdFor(u.email), setPwd(""))}>
+                        <KeyRound size={14} /> Senha
+                      </Button>
                       {!self && (
                         <Button
                           size="icon-sm"
@@ -168,6 +259,33 @@ export default function AccessPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {pwdFor && (
+        <div className={styles.pwdBox} role="dialog" aria-label="Definir senha">
+          <div>
+            Nova senha para <b>{pwdFor}</b>
+          </div>
+          <Input type="text" autoComplete="off" value={pwd} placeholder="mín. 6 caracteres" onChange={(e) => setPwd(e.target.value)} autoFocus />
+          <div className={styles.pwdActions}>
+            <Button variant="outline" onClick={() => setPwdFor(null)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={pwd.length < 6 || run.isPending}
+              onClick={async () => {
+                try {
+                  await setPassword(pwdFor, pwd);
+                  toast.success(`Senha definida para ${pwdFor}`);
+                  setPwdFor(null);
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : String(err));
+                }
+              }}
+            >
+              <KeyRound size={14} /> Salvar senha
+            </Button>
+          </div>
         </div>
       )}
     </div>
