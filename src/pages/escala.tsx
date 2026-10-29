@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { ChevronLeft, ChevronRight, Printer, Repeat } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileDown, Printer, Repeat } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { DayCell } from "../components/DayCell";
 import { Button } from "../components/Button";
@@ -17,6 +17,7 @@ import { useAppMutations } from "../helpers/useAppMutations";
 import { scheduleEngine, Sector } from "../helpers/scheduleEngine";
 import { buildScheduleSnapshot, TeamDayView } from "../helpers/buildScheduleSnapshot";
 import { labels } from "../helpers/labels";
+import { buildTeamMonth, downloadTeamMonthPdf, printTeamMonth } from "../helpers/schedulePrint";
 import type { AbsenceKind } from "../helpers/schema";
 import styles from "./escala.module.css";
 
@@ -48,6 +49,17 @@ export default function SchedulePage() {
   const [editing, setEditing] = useState<{ teamId: number; date: string } | null>(null);
   const [absenceTech, setAbsenceTech] = useState<string>("");
   const [absenceKind, setAbsenceKind] = useState<AbsenceKind>("folga_extra");
+  const [pdfBusy, setPdfBusy] = useState(false);
+  // mês inteiro numa folha A4 deitada, com o filtro de setor da tela
+  const sheet = () => buildTeamMonth(data!, month.slice(0, 7), filter === "todos" ? [...labels.sectors] : [filter]);
+  const pdf = async () => {
+    setPdfBusy(true);
+    try {
+      await downloadTeamMonthPdf(sheet());
+    } finally {
+      setPdfBusy(false);
+    }
+  };
 
   const nDays = daysInMonth(month);
   const dates = useMemo(() => Array.from({ length: nDays }, (_, i) => scheduleEngine.addDays(month, i)), [month, nDays]);
@@ -104,9 +116,14 @@ export default function SchedulePage() {
         title="Escala das equipes"
         description="Clique em qualquer dia da tabela para mudar na hora: em campo, folga, plantão ou técnico ausente. O ponto laranja marca os dias ajustados à mão."
         actions={
-          <Button variant="outline" onClick={() => window.print()}>
-            <Printer size={16} /> Imprimir
-          </Button>
+          <div className={styles.headActions}>
+            <Button variant="outline" onClick={() => printTeamMonth(sheet())} disabled={!data}>
+              <Printer size={16} /> Imprimir (A4 deitado)
+            </Button>
+            <Button onClick={() => void pdf()} disabled={!data || pdfBusy}>
+              <FileDown size={16} /> {pdfBusy ? "Gerando…" : "Baixar PDF"}
+            </Button>
+          </div>
         }
       />
 

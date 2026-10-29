@@ -326,3 +326,9 @@
   max-height: var(--radix-popover-content-available-height);
   overflow-y: auto;
 }
+
+.headActions {
+  display: flex;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
