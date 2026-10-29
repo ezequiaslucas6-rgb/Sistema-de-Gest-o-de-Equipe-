@@ -1,0 +1,96 @@
+.page {
+  max-width: 64rem;
+}
+
+.addForm {
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 1.4fr auto;
+  gap: var(--spacing-3);
+  align-items: end;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
+}
+
+.addForm > div {
+  min-width: 0;
+}
+
+.label {
+  display: block;
+  font-family: var(--font-family-monospace);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: var(--spacing-1);
+}
+
+.hint {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  margin: var(--spacing-2) 0 var(--spacing-6);
+}
+
+.error {
+  color: var(--error);
+}
+
+.skel {
+  height: 8rem;
+}
+
+.tableWrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table th {
+  font-family: var(--font-family-monospace);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.inline {
+  height: 2.1rem !important;
+  min-width: 12rem;
+}
+
+.meta {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.r {
+  text-align: right !important;
+}
+
+@media (max-width: 900px) {
+  .addForm {
+    grid-template-columns: 1fr;
+  }
+}

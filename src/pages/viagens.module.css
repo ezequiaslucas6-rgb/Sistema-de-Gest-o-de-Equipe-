@@ -384,3 +384,4 @@
   gap: var(--spacing-2);
   align-items: center;
 }
+.calcReset { display: flex; align-items: flex-end; }

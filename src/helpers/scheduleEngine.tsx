@@ -80,6 +80,10 @@ export interface TripLike {
   destination?: string;
   /** diária: null/undefined = automática pelo destino, true = sempre, false = nunca */
   perDiem?: boolean | null;
+  /** quantidade de diárias por colaborador digitada na viagem (vazio = automático: dias da viagem) */
+  diariasQtd?: number | null;
+  /** valor da diária digitado na viagem (vazio = valor das regras) */
+  diariaValor?: number | null;
 }
 
 export interface TripSettingsLike {
@@ -108,6 +112,12 @@ export interface TripAllowance {
   total: number;
   /** a viagem gera diária (destino da lista ou marcada manualmente) */
   eligible: boolean;
+  /** dias da viagem, da saída ao retorno (contando os dois) */
+  days: number;
+  /** valor de cada diária usado no cálculo */
+  value: number;
+  /** quantidade ou valor digitados na viagem (não automáticos) */
+  manual: boolean;
 }
 
 export interface GenerateInput {
@@ -855,32 +865,31 @@ function tripEligible(trip: TripLike, settings: TripSettingsLike): boolean {
   return list.some((d) => normalizeText(d) && dest.includes(normalizeText(d)));
 }
 
+/**
+ * Diária por colaborador: cada dia da viagem (saída até o retorno, contando os dois) vale uma diária no valor das regras
+ * (R$ 120). Só para os destinos que geram diária. Quantidade e valor podem ser digitados na viagem.
+ */
 function tripAllowance(trip: TripLike, settings: TripSettingsLike): TripAllowance {
   const end = tripEnd(trip);
-  const eligible = tripEligible(trip, settings);
   const hours = Math.max(0, (minutesOf(end) - minutesOf(trip.departAt)) / 60);
   const nights = Math.max(0, diffDays(end.slice(0, 10), trip.departAt.slice(0, 10)));
-  let full = 0;
-  let half = 0;
-  if (nights > 0) {
-    full = nights;
-    if (settings.halfOnReturn) half = 1;
-  } else if (hours >= settings.minHoursHalf) {
-    half = 1;
-  }
-  if (!eligible) {
-    full = 0;
-    half = 0;
-  }
-  const perTechnician = round2(full * settings.fullValue + half * settings.halfValue);
+  const days = nights + 1;
+  const eligible = tripEligible(trip, settings);
+  const manualQty = trip.diariasQtd != null && trip.perDiem !== false;
+  const qty = manualQty ? Number(trip.diariasQtd) : eligible ? days : 0;
+  const value = trip.diariaValor != null ? Number(trip.diariaValor) : settings.fullValue;
+  const perTechnician = round2(qty * value);
   return {
     nights,
     hours: round1(hours),
-    full,
-    half,
+    full: qty,
+    half: 0,
     perTechnician,
     total: round2(perTechnician * trip.technicianIds.length),
-    eligible,
+    eligible: eligible || manualQty,
+    days,
+    value,
+    manual: manualQty || trip.diariaValor != null,
   };
 }
 

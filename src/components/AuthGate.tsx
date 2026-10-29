@@ -5,6 +5,7 @@ import { ShieldAlert, WifiOff } from "lucide-react";
 import { supabase } from "../helpers/supabase";
 import { subscribeCloudChanges } from "../helpers/cloud";
 import { APP_DATA_QUERY_KEY } from "../helpers/useAppData";
+import { ProfileContext, type Profile } from "../helpers/profile";
 import { Button } from "./Button";
 import { CloudImportDialog } from "./CloudImportDialog";
 import styles from "./AuthGate.module.css";
@@ -16,6 +17,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   const qc = useQueryClient();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [access, setAccess] = useState<Access>("verificando");
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
@@ -31,17 +33,20 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!userEmail) return;
     setAccess("verificando");
-    supabase.rpc("escala_is_member").then(({ data, error }) => {
-      if (error && /fetch|network/i.test(error.message)) setAccess("offline");
-      else setAccess(!error && data === true ? "liberado" : "negado");
+    supabase.rpc("escala_my_profile").then(({ data, error }) => {
+      if (error && /fetch|network/i.test(error.message)) return setAccess("offline");
+      const p = data as { role?: string; name?: string | null } | null;
+      if (error || !p || (p.role !== "supervisor" && p.role !== "almoxarifado")) return setAccess("negado");
+      setProfile({ role: p.role, name: p.name ?? null, email: userEmail });
+      setAccess("liberado");
     });
   }, [userEmail, retry]);
 
   // outro computador gravou: recarrega os dados na hora
   useEffect(() => {
-    if (access !== "liberado") return;
+    if (access !== "liberado" || profile?.role !== "supervisor") return;
     return subscribeCloudChanges(() => qc.invalidateQueries({ queryKey: APP_DATA_QUERY_KEY }));
-  }, [access, qc]);
+  }, [access, profile?.role, qc]);
 
   if (session === undefined || (session && access === "verificando")) {
     return (
@@ -51,6 +56,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     );
   }
   if (!session) return <LoginForm />;
+  if (access === "liberado" && !profile) return null;
   if (access === "offline") {
     return (
       <div className={styles.center}>
@@ -80,10 +86,10 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     );
   }
   return (
-    <>
+    <ProfileContext.Provider value={profile!}>
       {children}
-      <CloudImportDialog />
-    </>
+      {profile?.role === "supervisor" && <CloudImportDialog />}
+    </ProfileContext.Provider>
   );
 };
 
@@ -92,11 +98,39 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [firstAccess, setFirstAccess] = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [info, setInfo] = useState<string | null>(null);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    setInfo(null);
+    if (firstAccess) {
+      if (password.length < 6) return setError("A senha precisa ter pelo menos 6 caracteres.");
+      if (password !== confirm) return setError("As senhas não conferem.");
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password });
+      setLoading(false);
+      if (error) {
+        return setError(
+          /registered|exists/i.test(error.message)
+            ? "Esse e-mail já tem senha. Use Entrar."
+            : /fetch|network/i.test(error.message)
+              ? "Sem conexão com a internet."
+              : /disabled|not allowed/i.test(error.message)
+                ? "Cadastro desativado. Peça ao supervisor para criar seu usuário."
+                : error.message,
+        );
+      }
+      if (!data.session) {
+        if (data.user && data.user.identities?.length === 0) return setError("Esse e-mail já tem senha. Use Entrar.");
+        setFirstAccess(false);
+        setInfo("Enviamos um e-mail de confirmação. Abra o link recebido e depois entre com a senha criada.");
+      }
+      return;
+    }
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
@@ -141,8 +175,10 @@ const LoginForm = () => {
           <div className={styles.mobileBrand}>
             <img src="./logo.png" alt="" /> Nortetel · Escala Técnica
           </div>
-          <h2 className={styles.formTitle}>Entrar</h2>
-          <p className={styles.formSub}>Use o e-mail e a senha cadastrados pelo administrador.</p>
+          <h2 className={styles.formTitle}>{firstAccess ? "Primeiro acesso" : "Entrar"}</h2>
+          <p className={styles.formSub}>
+            {firstAccess ? "Crie sua senha usando o e-mail liberado pelo supervisor." : "Use o e-mail e a senha cadastrados pelo administrador."}
+          </p>
           <label className={styles.flabel} htmlFor="email">
             E-mail
           </label>
@@ -154,14 +190,42 @@ const LoginForm = () => {
             id="password"
             className={styles.finput}
             type="password"
-            autoComplete="current-password"
+            autoComplete={firstAccess ? "new-password" : "current-password"}
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {firstAccess && (
+            <>
+              <label className={styles.flabel} htmlFor="confirm">
+                Repita a senha
+              </label>
+              <input
+                id="confirm"
+                className={styles.finput}
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
+            </>
+          )}
           {error && <p className={styles.ferror}>{error}</p>}
+          {info && <p className={styles.finfo}>{info}</p>}
           <button type="submit" disabled={loading} className={styles.fsubmit}>
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? "Aguarde..." : firstAccess ? "Criar senha" : "Entrar"}
+          </button>
+          <button
+            type="button"
+            className={styles.fswitch}
+            onClick={() => {
+              setFirstAccess(!firstAccess);
+              setError(null);
+              setInfo(null);
+            }}
+          >
+            {firstAccess ? "Já tenho senha — entrar" : "Primeiro acesso? Criar senha"}
           </button>
         </form>
       </main>

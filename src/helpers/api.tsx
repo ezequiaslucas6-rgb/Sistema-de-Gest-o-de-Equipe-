@@ -231,6 +231,8 @@ export const tripSchema = z
     advance: z.number().min(0).max(1_000_000),
     notes: z.string().trim().max(500).nullable(),
     perDiem: z.boolean().nullable(),
+    diariasQtd: z.number().min(0).max(366).nullable().optional(),
+    diariaValor: z.number().min(0).max(100_000).nullable().optional(),
   })
   .refine((v) => v.returnAt >= v.departAt, { message: "O retorno previsto deve ser depois da saída", path: ["returnAt"] })
   .refine((v) => !v.returnedAt || v.returnedAt >= v.departAt, { message: "O retorno real deve ser depois da saída", path: ["returnedAt"] });

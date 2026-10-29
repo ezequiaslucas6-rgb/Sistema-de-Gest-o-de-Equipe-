@@ -13,11 +13,13 @@ import { supabase } from "../helpers/supabase";
 import { cloudGetData } from "../helpers/cloud";
 import { toast } from "../helpers/toast";
 import { OPEN_IMPORT_EVENT } from "./CloudImportDialog";
+import { useProfile } from "../helpers/profile";
 import styles from "./DatabaseMenu.module.css";
 
 /** Menu dos dados: nuvem (Supabase), usuário logado, backup em arquivo e envio dos dados do banco local antigo. */
 export const DatabaseMenu = ({ className }: { className?: string }) => {
   const [email, setEmail] = useState("");
+  const { role } = useProfile();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const pickFile = async (file: File | undefined) => {
@@ -74,6 +76,8 @@ export const DatabaseMenu = ({ className }: { className?: string }) => {
           <div className={styles.path}>{email || "—"}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {role === "supervisor" && (
+          <>
         <DropdownMenuItem onClick={backup}>
           <Download size={15} /> Baixar backup (.json)
         </DropdownMenuItem>
@@ -84,6 +88,8 @@ export const DatabaseMenu = ({ className }: { className?: string }) => {
           <DropdownMenuItem onClick={() => window.dispatchEvent(new Event(OPEN_IMPORT_EVENT))}>
             <CloudUpload size={15} /> Enviar dados deste computador…
           </DropdownMenuItem>
+        )}
+          </>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => supabase.auth.signOut()}>

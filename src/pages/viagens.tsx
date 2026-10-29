@@ -6,7 +6,6 @@ import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
 import { Input } from "../components/Input";
 import { Textarea } from "../components/Textarea";
-import { Switch } from "../components/Switch";
 import { Skeleton } from "../components/Skeleton";
 import { ToggleGroup, ToggleGroupItem } from "../components/ToggleGroup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Select";
@@ -36,6 +35,17 @@ type Form = {
   notes: string;
   /** diária: automática pelo destino, sempre ou nunca */
   perDiem: "auto" | "sim" | "nao";
+  /** vazio = automático (dias da viagem) */
+  diariasQtd: string;
+  /** vazio = valor padrão das regras */
+  diariaValor: string;
+};
+
+const numOrNull = (v: string) => {
+  const t = v.trim().replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) && n >= 0 ? n : null;
 };
 
 const perDiemValue = (v: Form["perDiem"]) => (v === "auto" ? null : v === "sim");
@@ -54,11 +64,9 @@ function fmtDateTime(dt: string): string {
   return `${scheduleEngine.formatDate(d).slice(0, 5)} ${t}`;
 }
 
-/** "2 + ½" diárias */
-function fmtDiarias(full: number, half: number): string {
-  if (full === 0 && half === 0) return "—";
-  if (full === 0) return "½";
-  return half ? `${full} + ½` : String(full);
+function fmtDiarias(qty: number): string {
+  if (!qty) return "—";
+  return String(qty).replace(".", ",");
 }
 
 function shiftMonth(ym: string, delta: number): string {
@@ -117,14 +125,13 @@ export default function TripsPage() {
 
   // relatório por técnico (adiantamento rateado igualmente entre os técnicos da viagem)
   const report = useMemo(() => {
-    const rows = new Map<number, { trips: number; full: number; half: number; value: number; advance: number }>();
+    const rows = new Map<number, { trips: number; full: number; value: number; advance: number }>();
     for (const { trip, calc } of allMonthTrips) {
       const share = trip.technicianIds.length ? trip.advance / trip.technicianIds.length : 0;
       for (const id of trip.technicianIds) {
-        const r = rows.get(id) ?? { trips: 0, full: 0, half: 0, value: 0, advance: 0 };
+        const r = rows.get(id) ?? { trips: 0, full: 0, value: 0, advance: 0 };
         r.trips += 1;
         r.full += calc.full;
-        r.half += calc.half;
         r.value += calc.perTechnician;
         r.advance += share;
         rows.set(id, r);
@@ -141,8 +148,7 @@ export default function TripsPage() {
     const advance = allMonthTrips.reduce((s, x) => s + x.trip.advance, 0);
     const open = allMonthTrips.filter((x) => x.trip.status !== "paga").reduce((s, x) => s + x.calc.total - x.trip.advance, 0);
     const full = allMonthTrips.reduce((s, x) => s + x.calc.full * x.trip.technicianIds.length, 0);
-    const half = allMonthTrips.reduce((s, x) => s + x.calc.half * x.trip.technicianIds.length, 0);
-    return { value, advance, open, full, half };
+    return { value, advance, open, full };
   }, [allMonthTrips]);
 
   const travelingNow = (data?.trips ?? []).filter((t) => t.departAt <= now && scheduleEngine.tripEnd(t) >= now && !t.returnedAt);
@@ -171,6 +177,8 @@ export default function TripsPage() {
             status: t.status,
             notes: t.notes ?? "",
             perDiem: t.perDiem == null ? "auto" : t.perDiem ? "sim" : "nao",
+            diariasQtd: t.diariasQtd == null ? "" : String(t.diariasQtd).replace(".", ","),
+            diariaValor: t.diariaValor == null ? "" : String(t.diariaValor).replace(".", ","),
           }
         : {
             teamId: "__none",
@@ -185,6 +193,8 @@ export default function TripsPage() {
             status: "planejada",
             notes: "",
             perDiem: "auto",
+            diariasQtd: "",
+            diariaValor: "",
           },
     );
   };
@@ -200,6 +210,8 @@ export default function TripsPage() {
         returnedAt: form.returnedAt || null,
         destination: form.destination,
         perDiem: perDiemValue(form.perDiem),
+        diariasQtd: numOrNull(form.diariasQtd),
+        diariaValor: numOrNull(form.diariaValor),
       },
       settings,
     );
@@ -238,6 +250,8 @@ export default function TripsPage() {
         advance: Number(form.advance.replace(",", ".")) || 0,
         notes: form.notes || null,
         perDiem: perDiemValue(form.perDiem),
+        diariasQtd: numOrNull(form.diariasQtd),
+        diariaValor: numOrNull(form.diariaValor),
       },
       {
         onSuccess: () => {
@@ -260,10 +274,10 @@ export default function TripsPage() {
     const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
     const num = (v: number) => v.toFixed(2).replace(".", ",");
     const lines = [
-      ["Técnico", "Dupla", "Viagens", "Diárias cheias", "Meias diárias", "Valor", "Adiantado", "Saldo a pagar"].map(esc).join(";"),
-      ...report.map((r) => [r.name, r.code ?? "", r.trips, r.full, r.half, num(r.value), num(r.advance), num(r.balance)].map(esc).join(";")),
+      ["Técnico", "Dupla", "Viagens", "Diárias", "Valor", "Adiantado", "Saldo a pagar"].map(esc).join(";"),
+      ...report.map((r) => [r.name, r.code ?? "", r.trips, fmtDiarias(r.full), num(r.value), num(r.advance), num(r.balance)].map(esc).join(";")),
       "",
-      ["Destino", "Motivo", "Técnicos", "Saída", "Retorno", "Diárias por técnico", "Valor total", "Adiantamento", "Status"].map(esc).join(";"),
+      ["Destino", "Motivo", "Técnicos", "Saída", "Retorno", "Diárias por técnico", "Valor da diária", "Valor total", "Adiantamento", "Status"].map(esc).join(";"),
       ...allMonthTrips.map(({ trip, calc }) =>
         [
           trip.destination,
@@ -271,7 +285,8 @@ export default function TripsPage() {
           techNames(trip.technicianIds),
           fmtDateTime(trip.departAt),
           fmtDateTime(scheduleEngine.tripEnd(trip)),
-          fmtDiarias(calc.full, calc.half),
+          fmtDiarias(calc.full),
+          num(calc.value),
           num(calc.total),
           num(trip.advance),
           labels.tripStatus[trip.status],
@@ -360,12 +375,12 @@ export default function TripsPage() {
           <span>Viagens no mês</span>
         </div>
         <div className={styles.stat}>
-          <b>{totals.full}</b>
-          <span>Diárias cheias (soma dos técnicos)</span>
+          <b>{fmtDiarias(totals.full)}</b>
+          <span>Diárias no mês (soma dos colaboradores)</span>
         </div>
         <div className={styles.stat}>
-          <b>{totals.half}</b>
-          <span>Meias diárias (soma dos técnicos)</span>
+          <b className={styles.statMoney}>{settings ? money(settings.fullValue) : "—"}</b>
+          <span>Diária por colaborador</span>
         </div>
         <div className={styles.stat}>
           <b className={styles.statMoney}>{money(totals.value)}</b>
@@ -422,8 +437,10 @@ export default function TripsPage() {
                       <td className={`${styles.mono} ${styles.r}`}>
                         {calc.eligible ? (
                           <>
-                            {fmtDiarias(calc.full, calc.half)}
-                            <div className={styles.meta}>{money(calc.perTechnician)}</div>
+                            {fmtDiarias(calc.full)} × {money(calc.value)}
+                            <div className={styles.meta}>
+                              {money(calc.perTechnician)} p/ colab.{calc.manual ? " · editado" : ""}
+                            </div>
                           </>
                         ) : (
                           <span className={styles.noPerDiem}>sem diária</span>
@@ -494,8 +511,7 @@ export default function TripsPage() {
                       </td>
                       <td className={`${styles.mono} ${styles.r}`}>{r.trips}</td>
                       <td className={`${styles.mono} ${styles.r}`}>
-                        {r.full}
-                        {r.half > 0 ? ` + ${r.half}×½` : ""}
+                        {fmtDiarias(r.full)}
                       </td>
                       <td className={`${styles.mono} ${styles.r}`}>{money(r.value)}</td>
                       <td className={`${styles.mono} ${styles.r}`}>{money(r.advance)}</td>
@@ -516,16 +532,8 @@ export default function TripsPage() {
             <div className={styles.rules}>
               <div className={styles.rulesGrid}>
                 <div>
-                  <label className={styles.label}>Diária cheia (por pernoite)</label>
+                  <label className={styles.label}>Valor da diária por colaborador (R$)</label>
                   <Input type="number" min={0} step="0.01" value={rules.fullValue} onChange={(e) => setRules({ ...rules, fullValue: Number(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label className={styles.label}>Meia diária</label>
-                  <Input type="number" min={0} step="0.01" value={rules.halfValue} onChange={(e) => setRules({ ...rules, halfValue: Number(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label className={styles.label}>Horas mínimas p/ meia (sem pernoite)</label>
-                  <Input type="number" min={0} max={24} step="0.5" value={rules.minHoursHalf} onChange={(e) => setRules({ ...rules, minHoursHalf: Number(e.target.value) || 0 })} />
                 </div>
               </div>
               <div className={styles.destBox}>
@@ -565,13 +573,9 @@ export default function TripsPage() {
                   nome: marque "Gera diária: sim" na viagem.
                 </p>
               </div>
-              <div className={styles.switchRow}>
-                <Switch id="half-return" checked={rules.halfOnReturn} onCheckedChange={(v) => setRules({ ...rules, halfOnReturn: v })} />
-                <label htmlFor="half-return">Dia do retorno (após pernoite) vale meia diária</label>
-              </div>
               <p className={styles.hint}>
-                Exemplo com essas regras: sai segunda 07h e volta quarta 18h → 2 pernoites = 2 diárias cheias
-                {rules.halfOnReturn ? " + ½ no retorno" : ""} = {money(2 * rules.fullValue + (rules.halfOnReturn ? rules.halfValue : 0))} por técnico.
+                Cada dia da viagem (da saída ao retorno) vale 1 diária por colaborador. Exemplo: sai segunda e volta quarta → 3 diárias × {money(rules.fullValue)} ={" "}
+                {money(3 * rules.fullValue)} por colaborador; numa dupla, {money(6 * rules.fullValue)}. A quantidade e o valor podem ser editados em cada viagem.
               </p>
               <Button variant="outline" size="sm" onClick={() => saveTripSettings.mutate(rules)} disabled={saveTripSettings.isPending}>
                 <Save size={14} /> Salvar regras
@@ -705,18 +709,46 @@ export default function TripsPage() {
                   <SelectItem value="nao">Não gera diária</SelectItem>
                 </SelectContent>
               </Select>
+              {form.perDiem !== "nao" && (
+                <div className={styles.row3}>
+                  <div>
+                    <label className={styles.label}>Diárias por colaborador</label>
+                    <Input
+                      inputMode="decimal"
+                      value={form.diariasQtd}
+                      placeholder={formCalc ? `automático: ${formCalc.days}` : "automático"}
+                      onChange={(e) => setForm({ ...form, diariasQtd: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className={styles.label}>Valor da diária (R$)</label>
+                    <Input
+                      inputMode="decimal"
+                      value={form.diariaValor}
+                      placeholder={settings ? `padrão: ${String(settings.fullValue).replace(".", ",")}` : "padrão"}
+                      onChange={(e) => setForm({ ...form, diariaValor: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.calcReset}>
+                    {(form.diariasQtd || form.diariaValor) && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, diariasQtd: "", diariaValor: "" })}>
+                        Voltar ao automático
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
               <label className={styles.label}>Observações</label>
               <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               {formCalc && (
                 <div className={styles.calc}>
                   <div className={styles.micro}>Cálculo das diárias</div>
                   <div>
-                    {formCalc.nights} pernoite(s) · {formCalc.hours}h fora → <b>{fmtDiarias(formCalc.full, formCalc.half)}</b> diária(s) ={" "}
-                    <b>{money(formCalc.perTechnician)}</b> por técnico
+                    <b>{fmtDiarias(formCalc.full)}</b> diária(s) × {money(formCalc.value)} = <b>{money(formCalc.perTechnician)}</b> por colaborador
                     {form.technicianIds.length > 0 && (
                       <>
                         {" "}
-                        · total ({form.technicianIds.length} técnico{form.technicianIds.length > 1 ? "s" : ""}): <b>{money(formCalc.total)}</b>
+                        · total ({form.technicianIds.length} colaborador{form.technicianIds.length > 1 ? "es" : ""}): <b>{money(formCalc.total)}</b>
                       </>
                     )}
                   </div>
@@ -727,8 +759,8 @@ export default function TripsPage() {
                         : `Este destino não gera diária — só ${settings.paidDestinations.join(", ")}. Se for nesse sentido, marque "Gera diária: sim".`}
                     </div>
                   )}
-                  {formCalc.eligible && formCalc.full === 0 && formCalc.half === 0 && settings && (
-                    <div className={styles.meta}>Sem diária: menos de {settings.minHoursHalf}h fora e sem pernoite.</div>
+                  {formCalc.eligible && !formCalc.manual && (
+                    <div className={styles.meta}>Automático: {formCalc.days} dia(s) de viagem. Para mudar, preencha a quantidade ou o valor acima.</div>
                   )}
                 </div>
               )}

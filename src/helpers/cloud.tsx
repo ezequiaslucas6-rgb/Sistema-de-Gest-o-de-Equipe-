@@ -121,6 +121,8 @@ export async function cloudGetData(): Promise<OutputType> {
       advance: num(t.advance),
       notes: t.notes,
       perDiem: t.per_diem ?? null,
+      diariasQtd: t.diarias_qtd == null ? null : num(t.diarias_qtd),
+      diariaValor: t.diaria_valor == null ? null : num(t.diaria_valor),
     })),
     tripSettings: {
       fullValue: num(ts.full_value),
@@ -342,6 +344,8 @@ export const cloudOps: Record<string, Op> = {
       status: i.status,
       advance: i.advance,
       per_diem: i.perDiem ?? null,
+      diarias_qtd: i.diariasQtd ?? null,
+      diaria_valor: i.diariaValor ?? null,
       notes: i.notes || null,
     }),
   setTripStatus: async ({ id, status }) => {

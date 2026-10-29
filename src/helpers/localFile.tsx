@@ -97,6 +97,8 @@ export async function readLocalDbFile(file: File): Promise<OutputType> {
       advance: Number(t.advance),
       notes: t.notes,
       perDiem: t.per_diem == null ? null : t.per_diem === 1,
+      diariasQtd: null,
+      diariaValor: null,
     })),
     tripSettings: {
       fullValue: Number(ts?.full_value ?? 120),

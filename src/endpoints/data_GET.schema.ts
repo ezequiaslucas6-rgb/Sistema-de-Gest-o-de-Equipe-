@@ -88,6 +88,10 @@ export type TripDTO = {
   notes: string | null;
   /** diária: null = automática pelo destino, true = sempre, false = nunca */
   perDiem: boolean | null;
+  /** diárias por colaborador digitadas (null = automático: dias da viagem) */
+  diariasQtd: number | null;
+  /** valor da diária digitado (null = valor das regras) */
+  diariaValor: number | null;
 };
 
 export type TripSettingsDTO = {
