@@ -23,6 +23,8 @@ const ROLE_LABEL: Record<Role, string> = {
 const ROLES: Role[] = ["tecnico", "almoxarifado", "supervisor"];
 
 const KEY = ["escala_usuarios"] as const;
+/** Mesma regra da função do servidor: 8+ caracteres com letras e números. */
+const strong = (p: string) => p.length >= 8 && /[A-Za-z]/.test(p) && /\d/.test(p);
 
 /** Quem pode entrar no sistema e com qual perfil. */
 export default function AccessPage() {
@@ -76,8 +78,8 @@ export default function AccessPage() {
     }
     const technicianId = form.role === "tecnico" ? Number(form.technicianId) : null;
     const name = form.name.trim() || (technicianId ? techName(technicianId) : "") || null;
-    if (form.password && form.password.length < 6) {
-      toast.error("A senha precisa ter pelo menos 6 caracteres.");
+    if (form.password && !strong(form.password)) {
+      toast.error("A senha precisa ter pelo menos 8 caracteres, com letras e números.");
       return;
     }
     run.mutate(() => supabase.from("escala_usuarios").insert({ email, name, role: form.role, technician_id: technicianId }), {
@@ -152,7 +154,7 @@ export default function AccessPage() {
         )}
         <div>
           <label className={styles.label}>Senha inicial</label>
-          <Input type="text" autoComplete="off" value={form.password} placeholder="mín. 6 caracteres" onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <Input type="text" autoComplete="off" value={form.password} placeholder="8+ caracteres, letras e números" onChange={(e) => setForm({ ...form, password: e.target.value })} />
         </div>
         <Button type="submit" disabled={run.isPending}>
           <UserPlus size={15} /> Liberar acesso
@@ -266,13 +268,13 @@ export default function AccessPage() {
           <div>
             Nova senha para <b>{pwdFor}</b>
           </div>
-          <Input type="text" autoComplete="off" value={pwd} placeholder="mín. 6 caracteres" onChange={(e) => setPwd(e.target.value)} autoFocus />
+          <Input type="text" autoComplete="off" value={pwd} placeholder="8+ caracteres, letras e números" onChange={(e) => setPwd(e.target.value)} autoFocus />
           <div className={styles.pwdActions}>
             <Button variant="outline" onClick={() => setPwdFor(null)}>
               Cancelar
             </Button>
             <Button
-              disabled={pwd.length < 6 || run.isPending}
+              disabled={!strong(pwd) || run.isPending}
               onClick={async () => {
                 try {
                   await setPassword(pwdFor, pwd);

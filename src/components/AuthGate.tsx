@@ -6,6 +6,8 @@ import { supabase } from "../helpers/supabase";
 import { subscribeCloudChanges } from "../helpers/cloud";
 import { APP_DATA_QUERY_KEY } from "../helpers/useAppData";
 import { ProfileContext, type Profile } from "../helpers/profile";
+import { startNativePush } from "../helpers/push";
+import { toast } from "../helpers/toast";
 import { Button } from "./Button";
 import { CloudImportDialog } from "./CloudImportDialog";
 import styles from "./AuthGate.module.css";
@@ -42,6 +44,12 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
       setAccess("liberado");
     });
   }, [userEmail, retry]);
+
+  // app Android: renova o aviso do Firebase deste aparelho e mostra o aviso que chega com o app aberto
+  useEffect(() => {
+    if (access !== "liberado") return;
+    void startNativePush((title, body) => toast(`${title} — ${body}`));
+  }, [access]);
 
   // outro computador gravou: recarrega os dados na hora
   useEffect(() => {
@@ -108,7 +116,9 @@ const LoginForm = () => {
     setError(null);
     setInfo(null);
     if (firstAccess) {
-      if (password.length < 6) return setError("A senha precisa ter pelo menos 6 caracteres.");
+      if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+        return setError("A senha precisa ter pelo menos 8 caracteres, com letras e números.");
+      }
       if (password !== confirm) return setError("As senhas não conferem.");
       setLoading(true);
       const { data, error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password });

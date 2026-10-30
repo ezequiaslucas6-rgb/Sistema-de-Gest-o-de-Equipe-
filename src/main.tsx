@@ -21,6 +21,7 @@ import StockPage from "./pages/estoque";
 import AccessPage from "./pages/acessos";
 import CashPage from "./pages/caixa";
 import MyAreaPage from "./pages/meu";
+import SecurityPage from "./pages/seguranca";
 import { useProfile } from "./helpers/profile";
 import { registerServiceWorker } from "./helpers/push";
 
@@ -39,6 +40,7 @@ const pages = [
   { path: "/acessos", element: <AccessPage /> },
   { path: "/caixa", element: <CashPage /> },
   { path: "/meu", element: <MyAreaPage /> },
+  { path: "/seguranca", element: <SecurityPage /> },
 ];
 
 /** Supervisor vê tudo; supervisor de almoxarifado só a conferência de estoque. */

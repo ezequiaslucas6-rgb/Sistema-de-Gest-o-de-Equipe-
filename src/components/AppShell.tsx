@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, Siren, PartyPopper, LockKeyhole, Plane, Cpu, PackageCheck, KeyRound, Wallet, Smartphone } from "lucide-react";
+import { LayoutDashboard, CalendarRange, Wand2, Users, CalendarOff, Siren, PartyPopper, LockKeyhole, Plane, Cpu, PackageCheck, KeyRound, Wallet, Smartphone, ShieldCheck } from "lucide-react";
 import { useProfile } from "../helpers/profile";
 import { ThemeModeSwitch } from "./ThemeModeSwitch";
 import { DatabaseMenu } from "./DatabaseMenu";
@@ -21,6 +21,7 @@ const NAV = [
   { to: "/estoque", label: "Conferência de estoque", icon: PackageCheck },
   { to: "/caixa", label: "Caixa das equipes", icon: Wallet },
   { to: "/acessos", label: "Acessos", icon: KeyRound },
+  { to: "/seguranca", label: "Segurança", icon: ShieldCheck },
 ];
 
 /** O supervisor de almoxarifado só vê a conferência de estoque. */

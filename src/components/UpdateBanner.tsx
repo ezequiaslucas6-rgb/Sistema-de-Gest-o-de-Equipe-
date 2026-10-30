@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
+import { isNativeApp } from "../helpers/push";
 import styles from "./UpdateBanner.module.css";
 
 const SITE = "https://ezequiaslucas6-rgb.github.io/Sistema-de-Gest-o-de-Equipe-/";
@@ -31,7 +32,8 @@ export const UpdateBanner = () => {
   }, []);
 
   if (!latest) return null;
-  const desktop = !!window.escala;
+  // programa do Windows e app Android: a versão nova vem pelo instalador / APK da página de versões
+  const desktop = !!window.escala || isNativeApp();
   return (
     <div className={styles.banner} role="status">
       <span>
@@ -39,7 +41,7 @@ export const UpdateBanner = () => {
       </span>
       {desktop ? (
         <a href={RELEASES} target="_blank" rel="noreferrer" className={styles.action}>
-          <Download size={14} /> Baixar instalador novo
+          <Download size={14} /> {isNativeApp() ? "Baixar o app novo (APK)" : "Baixar instalador novo"}
         </a>
       ) : (
         <button className={styles.action} onClick={() => window.location.reload()}>

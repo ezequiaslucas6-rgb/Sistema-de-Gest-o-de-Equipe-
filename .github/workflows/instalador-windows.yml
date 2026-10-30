@@ -1,6 +1,14 @@
-name: Gerar instalador do Windows
+name: Gerar instaladores (Windows e Android)
 
-# A cada push na main, gera o instalador (.exe) e a versão portátil e publica numa Release
+# A cada push na main, gera o instalador do Windows (.exe), a versão portátil e o app Android (.apk assinado)
+# e publica tudo numa Release.
+#
+# Segredos do repositório usados pelo Android (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64   chave de assinatura (.p12) em base64
+#   ANDROID_KEYSTORE_PASSWORD senha da chave
+#   ANDROID_KEY_ALIAS         apelido da chave (escala)
+#   GOOGLE_SERVICES_JSON      conteúdo do google-services.json do Firebase (avisos no celular)
+# Sem a chave, o APK é compilado só para conferência e não é publicado.
 on:
   push:
     branches: [main]
@@ -13,6 +21,10 @@ concurrency:
   group: instalador
   cancel-in-progress: true
 
+env:
+  # impressão digital do certificado oficial: o APK publicado tem que bater com ela
+  APK_CERT_SHA256: "88:43:08:EF:51:E7:9E:C4:48:87:4E:D6:64:50:9A:4E:7F:B1:BB:8F:5A:C0:91:A0:E8:76:3A:A6:2F:CB:C6:99"
+
 jobs:
   windows:
     runs-on: windows-latest
@@ -24,15 +36,107 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            release/Escala-Tecnica-Instalador-*.exe
+            release/Escala-Tecnica-Portatil-*.exe
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_FCM: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: Versão
+        id: ver
+        run: echo "name=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Site empacotado no app
+        run: npm run build
+        env:
+          VITE_FCM: ${{ env.HAS_FCM == 'true' && '1' || '0' }}
+      - run: npx cap sync android
+      - name: Firebase (google-services.json)
+        if: env.HAS_FCM == 'true'
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      - name: Chave de assinatura
+        if: env.HAS_KEY == 'true'
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      - name: Gerar APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+        env:
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+          ANDROID_VERSION_NAME: ${{ steps.ver.outputs.name }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      - name: Conferir assinatura
+        if: env.HAS_KEY == 'true'
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          "$SIGNER" verify --verbose "$APK"
+          FP=$("$SIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print toupper($NF)}' | sed 's/../&:/g; s/:$//')
+          echo "Certificado do APK: $FP"
+          if [ "$FP" != "$APK_CERT_SHA256" ]; then
+            echo "::error::A chave usada não é a chave oficial da Nortetel. APK não publicado."
+            exit 1
+          fi
+          mkdir -p out
+          cp "$APK" "out/Escala-Tecnica-Android-${{ steps.ver.outputs.name }}.apk"
+      - name: Aviso (sem chave)
+        if: env.HAS_KEY != 'true'
+        run: echo "::warning::APK compilado sem assinatura (segredo ANDROID_KEYSTORE_BASE64 não configurado) — não será publicado."
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          name: android
+          path: out/*.apk
+          if-no-files-found: error
+
+  release:
+    needs: [windows, android]
+    if: ${{ always() && needs.windows.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-files
+          merge-multiple: true
       - name: Publicar Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: Escala Técnica 1.0.${{ github.run_number }}
           body: |
-            **Instalador:** baixe `Escala-Tecnica-Instalador-*.exe`, execute e siga os passos — cria o atalho "Escala Técnica" na área de trabalho.
-            **Portátil:** `Escala-Tecnica-Portatil-*.exe` roda sem instalar.
-            O banco de dados fica em Documentos\Escala Técnica\escala-tecnica.sqlite.
+            **Windows — instalador:** baixe `Escala-Tecnica-Instalador-*.exe`, execute e siga os passos.
+            **Windows — portátil:** `Escala-Tecnica-Portatil-*.exe` roda sem instalar.
+            **Android:** baixe `Escala-Tecnica-Android-*.apk` no celular e instale (permita "instalar apps desta fonte").
+            Certificado oficial do APK (SHA-256): `${{ env.APK_CERT_SHA256 }}`
           files: |
-            release/Escala-Tecnica-Instalador-*.exe
-            release/Escala-Tecnica-Portatil-*.exe
+            dist-files/*.exe
+            dist-files/*.apk
