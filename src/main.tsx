@@ -6,6 +6,7 @@ import "./global.css";
 import { GlobalContextProviders } from "./components/_globalContextProviders";
 import { AppShell } from "./components/AppShell";
 import { AuthGate } from "./components/AuthGate";
+import { AppUpdateGate } from "./components/AppUpdateGate";
 import DashboardPage from "./pages/_index";
 import SchedulePage from "./pages/escala";
 import OnCallPage from "./pages/plantao";
@@ -85,6 +86,8 @@ createRoot(document.getElementById("root")!).render(
         <AuthGate>
           <AppRoutes />
         </AuthGate>
+        {/* app Android: atualização automática (funciona até na tela de login) */}
+        <AppUpdateGate />
       </GlobalContextProviders>
     </HashRouter>
   </StrictMode>,

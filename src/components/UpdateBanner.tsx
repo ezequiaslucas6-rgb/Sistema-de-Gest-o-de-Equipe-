@@ -31,7 +31,8 @@ export const UpdateBanner = () => {
     return () => window.clearInterval(id);
   }, []);
 
-  if (!latest) return null;
+  // no app Android quem cuida é a atualização automática (AppUpdateGate)
+  if (!latest || isNativeApp()) return null;
   // programa do Windows e app Android: a versão nova vem pelo instalador / APK da página de versões
   const desktop = !!window.escala || isNativeApp();
   return (

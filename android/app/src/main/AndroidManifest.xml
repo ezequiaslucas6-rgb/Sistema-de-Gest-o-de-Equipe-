@@ -46,4 +46,6 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <!-- avisos do Firebase (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- atualização automática: abre o instalador do Android com o APK novo -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>
